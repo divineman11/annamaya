@@ -54,6 +54,66 @@ h += `<p>${esc(DOSHA_INTRO.outro)}</p>`;
 return h;
 }
 
+// ---------- Know your doshas (from data-learn.js) ----------
+
+function _refLine(ref, verified) {
+return `<p class="source small muted">Source: ${esc(ref)}${verified ? '' : ' (traditional teaching)'}</p>`;
+}
+
+function _ul(items) {
+return `<ul class="small">${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+}
+
+function doshaGuideHtml() {
+let h = '';
+h += '<h2 class="card-title">Know your doshas</h2>';
+DOSHA_GUIDE.forEach((d) => {
+h += `<details class="details">
+<summary>
+<span class="illus">${_art(d.symbol)}</span>
+<span class="badge ${esc(d.key)}">${esc(d.name)}</span>
+<span lang="sa">${esc(d.sanskrit)}</span>
+<span class="small muted">${esc(d.oneLine)}</span>
+</summary>
+<h3>Its nature</h3>
+${_ul(d.qualities.list)}
+${_refLine(d.qualities.ref, d.qualities.verified)}
+<h3>Where it lives</h3>
+<p class="small">${esc(d.seats.text)}</p>
+${_refLine(d.seats.ref, d.seats.verified)}
+<h3>What it does</h3>
+${_ul(d.jobs)}
+<h3>When balanced</h3>
+${_ul(d.balanced)}
+<h3>When too high</h3>
+${_ul(d.tooMuch)}
+<h3>What increases it</h3>
+${_ul(d.causes)}
+<h3>When it rises</h3>
+<p class="small">${esc(d.whenItRises.season)}</p>
+<p class="small">${esc(d.whenItRises.timeOfDay)}</p>
+<p class="small">${esc(d.whenItRises.lifeStage)}</p>
+${_refLine(d.whenItRises.ref, d.whenItRises.verified)}
+<h3>How to balance it</h3>
+<h4 class="small">Food</h4>
+${_ul(d.balance.food)}
+<h4 class="small">Routine</h4>
+${_ul(d.balance.routine)}
+<h4 class="small">Exercise</h4>
+${_ul(d.balance.exercise)}
+<h4 class="small">Mind</h4>
+${_ul(d.balance.mind)}
+<h3>Tastes</h3>
+<p class="small"><strong>Favour:</strong> ${d.tastes.favour.map(esc).join(', ')}</p>
+<p class="small"><strong>Reduce:</strong> ${d.tastes.reduce.map(esc).join(', ')}</p>
+${_refLine(d.tastes.ref, d.tastes.verified)}
+<p class="small"><em>${esc(d.tip)}</em></p>
+</details>`;
+});
+h += `<p class="small muted">${esc(DOSHA_GUIDE_NOTE)}</p>`;
+return h;
+}
+
 // ---------- Welcome (starting page) ----------
 
 function showWelcome() {
@@ -71,12 +131,29 @@ openOverlay(`
 </div>
 <p class="attribution">${esc(ATTRIBUTION)}</p>
 <button class="btn primary" data-welcome-close>Enter</button>
+<button class="btn ghost" data-welcome-intro>What are doshas?</button>
 </div>`, { locked: false });
 
 const panel = document.querySelector('.overlay-panel');
 if (panel) {
 panel.onclick = (e) => {
-if (e.target.closest('[data-welcome-close]')) closeOverlay();
+if (e.target.closest('[data-welcome-close]')) { closeOverlay(); return; }
+if (e.target.closest('[data-welcome-intro]')) {
+openOverlay(`<div class="card hero stack" data-welcome>${doshaIntroHtml()}<div class="btn-row"><button class="btn ghost" data-welcome-back>Back</button><button class="btn primary" data-welcome-close>Enter</button></div><button class="btn ghost" data-welcome-learn>Learn more about each dosha</button></div>`, { locked: false });
+const p = document.querySelector('.overlay-panel');
+if (p) p.onclick = panel.onclick;
+return;
+}
+if (e.target.closest('[data-welcome-back]')) showWelcome();
+if (e.target.closest('[data-welcome-learn]')) {
+closeOverlay();
+render('learn');
+requestAnimationFrame(() => {
+const card = Array.from(document.querySelectorAll('#view .card')).find((c) => c.textContent.includes('Know your doshas'));
+if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+return;
+}
 };
 }
 }
@@ -486,6 +563,9 @@ let html = '';
 // Dosha introduction
 html += '<div class="stack">';
 html += '<div class="card stack stagger">' + doshaIntroHtml() + '</div>';
+
+// Know your doshas
+html += '<div class="card stack stagger">' + doshaGuideHtml() + '</div>';
 
 // Your type
 html += '<div class="card stack stagger">';

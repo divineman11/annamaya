@@ -656,6 +656,8 @@ if (brand) {
 render('today');
 if (!settings.disclaimerAccepted || !settings.onboarded) {
   startOnboarding();
+} else {
+  showWelcome();
 }
 // Refresh Today every minute — only when Today is visible, no overlay open,
 // and the user isn't typing in a textarea/input or using a select.

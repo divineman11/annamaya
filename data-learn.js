@@ -185,3 +185,70 @@ const DOSHA_INTRO = {
   ],
   outro: 'Everyone has all three, in a different mix. Your natural mix from birth is your prakriti — that is why the same food suits one person and not another. The quiz helps you find your likely mix.'
 };
+
+/* ---- Know your doshas (Vata · Pitta · Kapha) — verified by Fable 2026-09-28 ---- */
+
+const DOSHA_GUIDE = [
+  { key: 'V', name: 'Vata', sanskrit: 'वात', element: 'Air + Space', symbol: 'wind',
+    oneLine: 'Vata is the wind in you — it moves, breathes, and carries every signal.',
+    qualities: {
+      list: ['Dry (ruksha)', 'Cold (sheeta)', 'Light (laghu)', 'Subtle (sukshma)', 'Moving (chala)', 'Clear, not slimy (vishada)', 'Rough (khara)'],
+      ref: 'Charaka Samhita, Sutrasthana 1.59', verified: true },
+    seats: { text: 'Mainly the large intestine; also the waist, thighs, ears, bones and skin.', ref: 'Ashtanga Hridaya, Sutrasthana 12', verified: false },
+    jobs: ['Moves everything — breath, blood, food, nerves', 'Starts every action and thought', 'Carries speech, touch and hearing', 'Kindles the digestive fire', 'Pushes out waste on time'],
+    balanced: ['Quick, creative mind full of ideas', 'Light body that moves easily', 'Regular bowels, easy mornings', 'Cheerful, enthusiastic mood'],
+    tooMuch: ['Restless, worried or anxious', 'Dry skin, dry lips, cracking joints', 'Gas, bloating or constipation', 'Light, broken sleep', 'Cold hands and feet, tiredness in waves'],
+    causes: ['Cold, dry, raw or leftover food', 'Skipping meals or eating on the run', 'Late nights, too little sleep', 'Constant travel, screens and noise', 'Cold, windy or dry weather'],
+    whenItRises: { season: 'Grows in summer, rises most in the rainy season; eases in autumn.', timeOfDay: 'Late afternoon and the small hours before dawn.', lifeStage: 'Old age.', ref: 'Ashtanga Hridaya, Sutrasthana 1 and 3', verified: false },
+    balance: {
+      food: ['Warm, freshly cooked, lightly oiled meals', 'Soups, khichdi, cooked vegetables, stewed fruit', 'Ghee, sesame oil, warm milk', 'Sweet, sour and salty tastes in measure', 'Warm water or ginger-cumin tea, not iced drinks'],
+      routine: ['Eat and sleep at fixed times every day', 'Warm sesame-oil massage before a bath', 'Keep warm; cover the ears in wind', 'Bed by 10 pm, wake with the sun'],
+      exercise: ['Gentle yoga, walking, slow swimming', 'Avoid exhausting, irregular workouts'],
+      mind: ['Slow belly breathing, five minutes, twice a day', 'Alternate-nostril breathing (Nadi Shodhana) for a steady mind']
+    },
+    tastes: { favour: ['Sweet', 'Sour', 'Salty'], reduce: ['Pungent', 'Bitter', 'Astringent'], ref: 'Ashtanga Hridaya, Sutrasthana 1', verified: false },
+    tip: 'Wind settles with warmth and routine. Same meal times, same bedtime — that is Vata\'s best friend.'
+  },
+  { key: 'P', name: 'Pitta', sanskrit: 'पित्त', element: 'Fire + Water', symbol: 'flame',
+    oneLine: 'Pitta is the fire in you — it digests, warms and sharpens.',
+    qualities: {
+      list: ['Slightly oily (sasneha)', 'Hot (ushna)', 'Sharp (tikshna)', 'Liquid (drava)', 'Sour (amla)', 'Flowing (sara)', 'Pungent (katu)'],
+      ref: 'Charaka Samhita, Sutrasthana 1.60', verified: true },
+    seats: { text: 'Mainly around the navel — the stomach and small intestine; also sweat, blood, eyes and skin.', ref: 'Ashtanga Hridaya, Sutrasthana 12', verified: false },
+    jobs: ['Digests food and separates nourishment from waste', 'Keeps body warmth steady', 'Gives hunger and thirst', 'Powers eyesight and skin glow', 'Sharpens understanding and courage'],
+    balanced: ['Strong digestion, steady appetite', 'Clear thinking, good focus', 'Warm, confident, brave nature', 'Bright eyes, glowing skin'],
+    tooMuch: ['Acidity, heartburn, burning feeling', 'Skin rashes, redness, boils', 'Short temper, impatience, criticism', 'Loose or urgent motions', 'Too much sweat, cannot bear heat'],
+    causes: ['Chilli, fried, very sour or salty food', 'Alcohol, coffee, fermented foods in excess', 'Skipping lunch, eating late', 'Midday sun and overheating', 'Anger, competition, working without breaks'],
+    whenItRises: { season: 'Grows in the rainy season, rises most in autumn; eases in early winter.', timeOfDay: 'Midday and around midnight.', lifeStage: 'The middle years.', ref: 'Ashtanga Hridaya, Sutrasthana 1 and 3', verified: false },
+    balance: {
+      food: ['Cooling, mildly spiced, freshly cooked meals', 'Rice, wheat, moong dal, coconut, cucumber, sweet fruit', 'Ghee, coriander, fennel, mint, rose', 'Sweet, bitter and astringent tastes', 'Cool (not iced) water, coconut water, buttermilk at lunch'],
+      routine: ['Lunch on time — the main meal of the day', 'Avoid the midday sun; wear a hat', 'Cool coconut-oil head massage', 'Bed by 10 pm; no work in bed'],
+      exercise: ['Swimming, moonlight walks, gentle cycling', 'Exercise early morning, never at noon'],
+      mind: ['Cooling breath (Sheetali) — inhale through a curled tongue', 'Sit by water or greenery; loosen the schedule a little']
+    },
+    tastes: { favour: ['Sweet', 'Bitter', 'Astringent'], reduce: ['Pungent', 'Sour', 'Salty'], ref: 'Ashtanga Hridaya, Sutrasthana 1', verified: false },
+    tip: 'Fire needs cooling, not starving. Eat on time, keep it mild, and let yourself rest.'
+  },
+  { key: 'K', name: 'Kapha', sanskrit: 'कफ', element: 'Water + Earth', symbol: 'leaf',
+    oneLine: 'Kapha is the earth and water in you — it builds, holds and soothes.',
+    qualities: {
+      list: ['Heavy (guru)', 'Cold (sheeta)', 'Soft (mridu)', 'Oily (snigdha)', 'Sweet (madhura)', 'Steady (sthira)', 'Slimy (picchila)'],
+      ref: 'Charaka Samhita, Sutrasthana 1.61', verified: true },
+    seats: { text: 'Mainly the chest; also the throat, head, joints, stomach, fat, nose and tongue.', ref: 'Ashtanga Hridaya, Sutrasthana 12', verified: false },
+    jobs: ['Builds and nourishes the body', 'Keeps joints oiled and smooth', 'Gives strength, stamina and immunity', 'Holds the body firm and steady', 'Brings patience, calm and forgiveness'],
+    balanced: ['Strong, steady body and stamina', 'Calm, patient, loving nature', 'Deep sleep, good memory', 'Smooth skin, thick hair, strong joints'],
+    tooMuch: ['Heaviness, sluggishness, sleeping too long', 'Weight gain that will not shift', 'Congestion, cough, cold, mucus', 'Dull appetite, slow digestion', 'Low mood, attachment, not wanting change'],
+    causes: ['Sweet, oily, heavy, fried, cold food', 'Curd, cheese, ice cream, especially at night', 'Overeating and snacking without hunger', 'Daytime sleep, sitting all day', 'Cold, damp, cloudy weather'],
+    whenItRises: { season: 'Grows in winter, rises most in spring; eases in summer.', timeOfDay: 'Early morning and early night.', lifeStage: 'Childhood.', ref: 'Ashtanga Hridaya, Sutrasthana 1 and 3', verified: false },
+    balance: {
+      food: ['Light, warm, well-spiced meals', 'Millets, barley, old rice, lots of vegetables', 'Ginger, pepper, turmeric, cumin, honey', 'Pungent, bitter and astringent tastes', 'Warm water with a little ginger; skip cold drinks'],
+      routine: ['Rise before sunrise; no daytime naps', 'Light breakfast, or skip it if not hungry', 'Dry powder massage (udvartana) to stir the body', 'Lighter, earlier dinner'],
+      exercise: ['Brisk walking, running, sun salutations, dancing', 'Sweat a little every morning'],
+      mind: ['Energising breath (Bhastrika) with a teacher, if fit', 'Learn something new; say yes to change']
+    },
+    tastes: { favour: ['Pungent', 'Bitter', 'Astringent'], reduce: ['Sweet', 'Sour', 'Salty'], ref: 'Ashtanga Hridaya, Sutrasthana 1', verified: false },
+    tip: 'Earth loves stillness a little too much. Move first, then eat, and keep it light.'
+  }
+];
+
+const DOSHA_GUIDE_NOTE = 'Everyone has all three doshas; one or two usually lead. These are traditional descriptions for learning, not a diagnosis. Persistent symptoms need a doctor.';
