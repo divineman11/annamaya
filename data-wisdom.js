@@ -322,3 +322,71 @@ const AGNI = {
   ],
   caution: 'This section shares scripture and tradition as reflection, not as medical advice. Ayurvedic ideas about agni are presented as classical teaching, not as a medical claim. For health concerns, consult a qualified professional.'
 };
+
+/* ---- Chewing: pace, attention and the mouth (verified by Fable 2026-09-28) ---- */
+
+const CHEWING = {
+  title: 'Chew slowly, eat mindfully',
+  intro: 'The classics never counted chews; they asked for a steady pace, a warm plate and a mind that stays with the food. Modern trials add that chewing each bite more tends to make a meal a little smaller and the eater a little fuller — a small, honest effect, not a remedy for anything.',
+  classical: [
+    { title: 'Why not too fast',
+      dev: 'अतिद्रुतं हि भुञ्जानस्योत्स्नेहनमवसादनं भोजनस्याप्रतिष्ठानं च … तस्मान्नातिद्रुतमश्नीयात् ।',
+      iast: 'atidrutaṁ hi bhuñjānasyotsnehanam avasādanaṁ bhojanasyāpratiṣṭhānaṁ ca … tasmān nātidrutam aśnīyāt',
+      en: 'When one eats too fast, the food slips the wrong way, sinks, and does not settle; one cannot tell whether it is good or faulty. So do not eat too fast.',
+      note: 'The same verse adds that eating while talking, laughing or with the mind elsewhere brings "the same faults as eating too fast". The point is attention, not a count of chews.',
+      ref: 'Charaka Samhita, Vimanasthana 1.25', verified: true },
+    { title: 'Why not too slow',
+      dev: 'अतिविलम्बितं हि भुञ्जानो न तृप्तिमधिगच्छति, बहु भुङ्क्ते, शीतीभवत्याहारजातं, विषमं च पच्यते; तस्मान्नातिविलम्बितमश्नीयात् ।',
+      iast: 'ativilambitaṁ hi bhuñjāno na tṛptim adhigacchati, bahu bhuṅkte, śītībhavaty āhārajātaṁ, viṣamaṁ ca pacyate; tasmān nātivilambitam aśnīyāt',
+      en: 'When one eats too slowly, one feels no satisfaction, eats a lot, the food goes cold and is digested unevenly. So do not eat too slowly.',
+      note: 'A useful check on the "chew forever" idea. Charaka wants a steady, unhurried meal — not a dawdling one that goes cold on the plate.',
+      ref: 'Charaka Samhita, Vimanasthana 1.25', verified: true },
+    { title: 'Vagbhata says it in one line',
+      dev: 'काले सात्म्यं शुचि हितं स्निग्धोष्णं लघु तन्मनाः । षड्रसं मधुरप्रायं नातिद्रुतविलम्बितम् ॥',
+      iast: 'kāle sātmyaṁ śuci hitaṁ snigdhoṣṇaṁ laghu tanmanāḥ | ṣaḍrasaṁ madhuraprāyaṁ nātidrutavilambitam',
+      en: 'Eat at the right time, food that suits you, clean, wholesome, unctuous, warm and light, with the mind on the meal; of all six tastes, mostly sweet; neither too fast nor too slow.',
+      note: 'The Ashtanga Hridaya repeats Charaka\'s rule almost word for word. Neither text mentions chewing (carvaṇa) or a number of chews.',
+      ref: 'Ashtanga Hridaya, Sutrasthana 8.35-36', verified: true },
+    { title: 'Sushruta: even pace, even digestion',
+      en: 'Sit at ease on a good seat, body upright, the whole mind on the meal … neither too hurriedly nor too slowly, even when very hungry. Food eaten neither too slowly nor too hurriedly is digested evenly.',
+      note: 'From Bhishagratna\'s English translation of the rules of eating at the end of the chapter. Verse numbers vary by edition and the Sanskrit was not checked, so only the chapter is given.',
+      ref: 'Sushruta Samhita, Sutrasthana 46 (rules of eating)', verified: true },
+    { title: 'Digestion begins on the tongue',
+      dev: 'क्लेदकः सोऽन्नसङ्घातक्लेदनात् । रसबोधनात् बोधको रसनास्थायी ।',
+      iast: "kledakaḥ so'nna-saṅghāta-kledanāt | rasa-bodhanāt bodhako rasanāsthāyī",
+      en: 'Kledaka (kapha) in the stomach moistens the mass of food; bodhaka, seated on the tongue, makes taste known.',
+      note: 'Ayurveda places tasting and moistening before the stomach\'s fire. Chewing is how the tongue does its work, and taste is what tells you when you have had enough.',
+      ref: 'Ashtanga Hridaya, Sutrasthana 12.16-17', verified: true }
+  ],
+  modern: [
+    { point: 'Digestion starts in the mouth. Chewing breaks food up, and saliva carries an enzyme (amylase) that begins to break down starch before the food reaches the stomach.',
+      source: 'NIDDK, Your Digestive System & How It Works — https://www.niddk.nih.gov/health-information/digestive-diseases/digestive-system-how-it-works' },
+    { point: 'Chewing each bite 1.5 or 2 times more than usual cut lunch intake by about 9.5% and 14.8% in a 45-person crossover trial — without leaving people hungrier afterwards.',
+      source: 'Zhu & Hollis, J Acad Nutr Diet 2014 — https://pubmed.ncbi.nlm.nih.gov/24215801/' },
+    { point: '40 chews per bite instead of 15 meant about 12% less eaten, lower ghrelin (the hunger hormone) and higher GLP-1 and CCK (fullness hormones) — in both lean and obese young men.',
+      source: 'Li et al., Am J Clin Nutr 2011 — https://pubmed.ncbi.nlm.nih.gov/21775556/' },
+    { point: 'Across 23 studies, fast eaters were about twice as likely to be obese (odds ratio 2.15) and had a BMI about 1.8 higher on average. This is an association; it does not prove that slowing down by itself causes weight loss.',
+      source: 'Ohkuma et al., Int J Obes 2015 — https://pubmed.ncbi.nlm.nih.gov/26100137/' },
+    { point: 'A review of 17 trials found chewing more reduced food intake in 10 of 16 experiments and modestly lowered self-rated hunger. The authors call the evidence "preliminary".',
+      source: 'Miquel-Kergoat et al., Physiol Behav 2015 — https://pubmed.ncbi.nlm.nih.gov/26188140/' },
+    { point: 'Chewing raises the small burst of heat the body makes after a meal (diet-induced thermogenesis) — real, but a few kilocalories, in a study of 11 men.',
+      source: 'Hamada & Hayashi, Sci Rep 2021 — https://pmc.ncbi.nlm.nih.gov/articles/PMC8660770/' },
+    { point: 'Blood sugar: chewing brown rice or chickpeas longer made smaller particles and more saliva mixing, but did not change the rise in blood glucose. What the food is matters more than how long it is chewed.',
+      source: 'Chen et al., Eur J Nutr 2022 — https://pmc.ncbi.nlm.nih.gov/articles/PMC9596526/' }
+  ],
+  myths: [
+    { claim: '"Chew every bite 32 times, one for each tooth."',
+      truth: 'Not in any Ayurvedic text. The number is usually traced to the British prime minister William Gladstone and was made famous around 1900 by Horace Fletcher, "the Great Masticator", whose followers chewed until food turned liquid. Doctors of his day called it a fad. Trials do show more chews mean a little less eaten — but there is no magic number.' },
+        { claim: '"Charaka says to chew each morsel thoroughly."',
+      truth: 'Charaka, Sushruta and Vagbhata say "not too fast, not too slow", with the mind on the food. They never give a chewing count — and Charaka warns that eating too slowly also does harm: cold food, no satisfaction, overeating.' },
+    { claim: '"Chewing more lowers blood sugar."',
+      truth: 'Mixed. Chewing releases starch sugars a little sooner, and in a 2022 trial longer chewing did not change the glucose curve for rice or chickpeas. The kind of food — whole grain, dal, vegetables — matters far more.' }
+  ],
+  tips: [
+    'Put the spoon down between mouthfuls; pick it up again only after you swallow.',
+    'Let roti or rice be chewed before the next bite — do not wash every morsel down with water.',
+    'Aim for a steady 20-minute meal: unhurried, but not so slow that the food goes cold (Charaka\'s "not too slow").',
+    'Phone off, plate in front. Talking, laughing or scrolling bring "the same faults as eating too fast".'
+  ],
+  caution: 'For education only. Chewing more is a small help for appetite, not a treatment for weight, diabetes or reflux. Trouble chewing or swallowing, tooth or jaw pain, or food that sticks on the way down need a dentist or doctor.'
+};

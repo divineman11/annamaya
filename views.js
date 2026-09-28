@@ -221,6 +221,64 @@ h += `<p class="small muted">${esc(DOSHA_GUIDE_NOTE)}</p>`;
 return h;
 }
 
+// ---------- Chewing (from data-wisdom.js) ----------
+
+function chewingShortHtml() {
+if (typeof CHEWING === 'undefined') return '';
+let h = `<div class="card stack chew-card"><h3 class="card-title">${esc(CHEWING.title)}</h3>`;
+const first = CHEWING.classical && CHEWING.classical[0];
+if (first) {
+h += `<p>${esc(first.en)}</p>`;
+h += `<p class="verse-ref">— ${esc(first.ref)}</p>`;
+}
+h += '<ul class="small">' + (CHEWING.tips || []).slice(0, 2).map((t) => `<li>${esc(t)}</li>`).join('') + '</ul>';
+h += '<button class="btn ghost" data-chew-more>Read more</button></div>';
+return h;
+}
+
+function chewingFullHtml() {
+if (typeof CHEWING === 'undefined') return '';
+let h = `<h2 class="card-title">${esc(CHEWING.title)}</h2>`;
+h += `<p>${esc(CHEWING.intro)}</p>`;
+h += '<h3 class="card-title">What the classics say</h3>';
+(CHEWING.classical || []).forEach((c) => {
+h += `<details class="details">
+<summary>${esc(c.title)} <span class="small muted">· ${esc(c.ref)}</span></summary>
+<div class="verse">
+${c.dev ? `<div class="verse-dev" lang="sa">${esc(c.dev)}</div>` : ''}
+${c.iast ? `<div class="verse-iast">${esc(c.iast)}</div>` : ''}
+<div class="verse-en">${esc(c.en)}</div>
+<div class="verse-ref">— ${esc(c.ref)}</div>
+</div>
+<p class="verse-note">${esc(c.note)}</p>
+</details>`;
+});
+h += '<h3 class="card-title">What modern studies say</h3>';
+h += '<ul class="small stack">';
+(CHEWING.modern || []).forEach((m) => {
+const src = m.source || '';
+const idx = src.indexOf(' — http');
+let srcLine;
+if (idx === -1) {
+srcLine = `<p class="source small muted">Source: ${esc(src)}</p>`;
+} else {
+const name = src.slice(0, idx);
+const url = src.slice(idx + 3);
+srcLine = `<p class="source small muted">Source: ${esc(name)} — <a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></p>`;
+}
+h += `<li>${esc(m.point)}${srcLine}</li>`;
+});
+h += '</ul>';
+h += '<h3 class="card-title">Popular sayings, checked</h3>';
+(CHEWING.myths || []).forEach((m) => {
+h += `<p><strong>${esc(m.claim)}</strong><br>${esc(m.truth)}</p>`;
+});
+h += '<h3 class="card-title">Simple habits</h3>';
+h += '<ol class="small stack">' + (CHEWING.tips || []).map((t) => `<li>${esc(t)}</li>`).join('') + '</ol>';
+h += `<p class="small muted">${esc(CHEWING.caution)}</p>`;
+return h;
+}
+
 // ---------- Welcome (starting page) ----------
 
 function showWelcome() {
@@ -237,6 +295,7 @@ openOverlay(`
 <div class="verse-ref">— ${esc(HERO_VERSE.ref)}</div>
 </div>
 <p class="attribution">${esc(ATTRIBUTION)}</p>
+${chewingShortHtml()}
 <button class="btn primary" data-welcome-close>Enter</button>
 <button class="btn ghost" data-welcome-intro>What are doshas?</button>
 </div>`, { locked: false });
@@ -247,6 +306,12 @@ panel.onclick = (e) => {
 if (e.target.closest('[data-welcome-close]')) { closeOverlay(); return; }
 if (e.target.closest('[data-welcome-intro]')) {
 openOverlay(`<div class="card hero stack" data-welcome>${doshaIntroHtml()}<div class="btn-row"><button class="btn ghost" data-welcome-back>Back</button><button class="btn primary" data-welcome-close>Enter</button></div><button class="btn ghost" data-welcome-learn>Learn more about each dosha</button></div>`, { locked: false });
+const p = document.querySelector('.overlay-panel');
+if (p) p.onclick = panel.onclick;
+return;
+}
+if (e.target.closest('[data-chew-more]')) {
+openOverlay(`<div class="card stack" data-welcome>${chewingFullHtml()}<div class="btn-row"><button class="btn ghost" data-welcome-back>Back</button><button class="btn primary" data-welcome-close>Enter</button></div></div>`, { locked: false });
 const p = document.querySelector('.overlay-panel');
 if (p) p.onclick = panel.onclick;
 return;
