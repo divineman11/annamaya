@@ -1,0 +1,5 @@
+﻿*.bak
+*.raw.txt
+*.failed
+__pycache__/
+

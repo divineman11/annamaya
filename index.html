@@ -3,106 +3,64 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Pitta Plate</title>
-<meta name="theme-color" content="#1F5C52">
+<title>Annamaya · Vedic Lifestyle Diet</title>
+<meta name="description" content="Annamaya — we become what we eat. Ayurvedic diet by your dosha: find your constitution, daily meals, a food library and foods that don't go together. Free and private.">
+<meta name="theme-color" content="#234B3B">
+<meta name="theme-color" content="#1B1F2A" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Pitta Plate">
+<meta name="apple-mobile-web-app-title" content="Annamaya">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yatra+One&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&family=Tiro+Devanagari+Sanskrit:ital@0;1&display=swap">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<a class="skip" href="#view">Skip to content</a>
 <header class="top">
-  <div class="top-row">
-    <div>
-      <p class="eyebrow" id="dateLabel">Today</p>
-      <h1>Pitta Plate</h1>
-    </div>
-    <div class="streak" id="streak" title="Days in a row with breakfast, lunch and dinner done">
-      <span class="streak-num" id="streakNum">0</span><span class="streak-lbl">day streak</span>
+  <div class="brand">
+    <span class="brand-mark"></span>
+    <div class="brand-text">
+      <h1>Annamaya</h1>
+      <span class="brand-sub">Vedic Lifestyle Diet</span>
     </div>
   </div>
+  <button id="typeBadge" class="badge" hidden></button>
 </header>
 
-<main id="app">
-  <section id="tab-today" class="tab">
-    <div class="daybar">
-      <button class="icon-btn" id="prevDay" aria-label="Previous day">‹</button>
-      <button class="link-btn" id="goToday">Jump to today</button>
-      <button class="icon-btn" id="nextDay" aria-label="Next day">›</button>
+<main id="view" tabindex="-1">
+  <noscript>
+    <div class="card">
+      <h2 class="card-title">JavaScript is needed</h2>
+      <p>This app runs entirely in your browser and needs JavaScript to show your meals, quiz and food library. Please enable JavaScript and reload the page.</p>
     </div>
-    <div class="controls">
-      <label class="ctl"><span>Diet</span>
-        <select id="dietSel">
-          <option value="nonveg">Non-veg</option>
-          <option value="egg">Egg + veg</option>
-          <option value="veg">Veg</option>
-        </select>
-      </label>
-      <label class="ctl toggle"><input type="checkbox" id="gymToggle"><span>Gym day</span></label>
-      <label class="ctl"><span>Running late</span>
-        <select id="shiftSel">
-          <option value="0">On time</option>
-          <option value="30">+30 min</option>
-          <option value="60">+1 hr</option>
-          <option value="90">+1.5 hr</option>
-          <option value="120">+2 hr</option>
-        </select>
-      </label>
-    </div>
-    <div id="banner" class="banner" hidden></div>
-    <ol id="slots" class="slots"></ol>
-    <p class="summary" id="daySummary"></p>
-  </section>
-
-  <section id="tab-out" class="tab" hidden>
-    <h2>Ordering on Swiggy?</h2>
-    <p class="muted">Pick the meal. Green is safe for pitta, red is best skipped.</p>
-    <div class="seg" id="outSeg"></div>
-    <div class="out-grid" id="outGrid"></div>
-  </section>
-
-  <section id="tab-weight" class="tab" hidden>
-    <h2>Weight</h2>
-    <p class="muted">Weigh in once a week, same day, morning, before food. Target gain: 0.25 to 0.5 kg a week.</p>
-    <form id="wForm" class="wform">
-      <label class="ctl"><span>Date</span><input type="date" id="wDate" required></label>
-      <label class="ctl"><span>Weight (kg)</span><input type="number" id="wKg" step="0.1" min="30" max="150" inputmode="decimal" required></label>
-      <button class="btn primary" type="submit">Save</button>
-    </form>
-    <p class="err" id="wErr" hidden></p>
-    <div class="stats" id="wStats"></div>
-    <div class="chart" id="wChart"></div>
-    <ul class="wlist" id="wList"></ul>
-  </section>
-
-  <section id="tab-grocery" class="tab" hidden>
-    <h2>Grocery list</h2>
-    <p class="muted">Built from the meals you picked most recently for each slot. Enough for a week.</p>
-    <div id="groceryList"></div>
-    <button class="btn" id="resetGrocery">Clear ticks</button>
-  </section>
-
-  <section id="tab-rules" class="tab" hidden>
-    <h2>Your rules</h2>
-    <ul class="rules" id="rulesList"></ul>
-    <p class="fine">Lifestyle guidance based on Ayurvedic tradition, not medical advice. Check with a doctor for any health condition or allergy.</p>
-  </section>
+  </noscript>
 </main>
 
-<nav class="tabs" id="tabs">
-  <button data-tab="today" class="on">Today</button>
-  <button data-tab="out">Eat out</button>
-  <button data-tab="weight">Weight</button>
-  <button data-tab="grocery">Grocery</button>
-  <button data-tab="rules">Rules</button>
+<nav class="tabs" aria-label="Main">
+  <button data-tab="today" aria-current="page"><span class="ico"></span><span class="lbl">Today</span></button>
+  <button data-tab="foods"><span class="ico"></span><span class="lbl">Foods</span></button>
+  <button data-tab="learn"><span class="ico"></span><span class="lbl">Learn</span></button>
+  <button data-tab="progress"><span class="ico"></span><span class="lbl">Progress</span></button>
+  <button data-tab="me"><span class="ico"></span><span class="lbl">Me</span></button>
 </nav>
 
-<script src="data.js"></script>
-<script src="app.js"></script>
+<div id="overlay" class="overlay" hidden>
+  <div class="overlay-panel" role="dialog" aria-modal="true"></div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="data.js" defer></script>
+<script src="data-foods.js" defer></script>
+<script src="data-learn.js" defer></script>
+<script src="data-quiz.js" defer></script>
+<script defer src="data-wisdom.js"></script>
+<script src="art.js" defer></script>
+<script src="views.js" defer></script>
+<script src="app.js" defer></script>
 </body>
 </html>

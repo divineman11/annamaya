@@ -1,12 +1,17 @@
-// Pitta Plate — all data stays on this device (localStorage).
+// Annamaya — Vedic Lifestyle Diet — all data stays on this device (localStorage).
+// Plain browser JS, no modules. This file loads LAST and holds all boot code.
 const $ = (s) => document.querySelector(s);
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage blocked */ } },
 };
 
-let settings = store.get('pd.settings', { diet: 'nonveg', gymTime: '17:00' });
+const DEFAULT_SETTINGS = {
+  diet: 'nonveg', gymTime: '17:00', type: null, goal: 'maintain', times: {},
+  textSize: 'normal', theme: 'auto', onboarded: false, disclaimerAccepted: false,
+};
+let settings = Object.assign({}, DEFAULT_SETTINGS, store.get('pd.settings', {}));
 let days = store.get('pd.days', {});
 let weights = store.get('pd.weights', []);
 let defaults = store.get('pd.defaults', {});
@@ -24,17 +29,33 @@ const getDay = (k) => days[k] || blankDay();
 const editDay = (k) => (days[k] = days[k] || blankDay());
 const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 const fmt = (min) => { const h = Math.floor(min / 60) % 24, m = min % 60; const ap = h >= 12 ? 'PM' : 'AM'; return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${ap}`; };
+const timeOf = (slot) => (settings.times && settings.times[slot.id]) || slot.time;
+
+const typeLetters = () => (settings.type ? String(settings.type).split('') : []);
 
 const RANK = { veg: 0, egg: 1, nonveg: 2 };
 function optionsFor(slot) {
+  // 1. Diet filter
   const max = slot.vegOnly ? 0 : RANK[settings.diet];
-  return slot.options.filter((o) => RANK[o.type] <= max);
+  const dietList = slot.options.filter((o) => RANK[o.type] <= max);
+  // 2. Constitution filter (skipped entirely when type unset — Amendment 1)
+  const L = typeLetters();
+  if (!L.length) return dietList;
+  const hits = dietList.filter((o) => o.suits && o.suits.some((s) => L.includes(s)));
+  if (!hits.length) return dietList; // fall back to diet-filtered list
+  hits.sort((a, b) => {
+    const aAll = L.every((l) => a.suits.includes(l)) ? 1 : 0;
+    const bAll = L.every((l) => b.suits.includes(l)) ? 1 : 0;
+    return bAll - aAll; // stable in modern engines: preserves original order otherwise
+  });
+  return hits;
 }
+
 function slotsFor(k) {
   const d = getDay(k);
   return SLOTS.filter((s) => !s.gymOnly || d.gym)
     .map((s) => {
-      const base = s.gymOnly ? toMin(settings.gymTime) + 60 : toMin(s.time);
+      const base = s.gymOnly ? toMin(settings.gymTime) + 60 : toMin(timeOf(s));
       return { ...s, min: base + (d.shift || 0), baseMin: base };
     })
     .sort((a, b) => a.min - b.min);
@@ -45,7 +66,8 @@ function pickedOption(k, slot) {
   return opts.find((o) => o.name === name) || opts[0];
 }
 
-// Streak: consecutive days with every main meal eaten (on plan or cheat, not skipped).
+// Streak: consecutive days with every main meal eaten (on plan or ate out, not skipped).
+// Amendment 15: only status==='done' counts for the Today ring; streak keeps both.
 function dayComplete(k) {
   const st = getDay(k).status;
   return SLOTS.filter((s) => s.main).every((s) => st[s.id] === 'done' || st[s.id] === 'cheat');
@@ -57,115 +79,532 @@ function streak() {
   return n;
 }
 
+// ---------- Migration (Amendment 8) ----------
+(function migrate() {
+  // A1/A6: normalise shapes BEFORE any access to days/defaults/weights/bought.
+  if (!days || typeof days !== 'object' || Array.isArray(days)) days = {};
+  if (!defaults || typeof defaults !== 'object' || Array.isArray(defaults)) defaults = {};
+  if (!bought || typeof bought !== 'object' || Array.isArray(bought)) bought = {};
+  if (!Array.isArray(weights)) weights = [];
+  weights = weights.filter((w) => w && typeof w === 'object' && /^\d{4}-\d{2}-\d{2}$/.test(w.date) && Number.isFinite(w.kg) && w.kg > 20 && w.kg < 400);
+  if (!settings || typeof settings !== 'object') settings = {};
+  const q = settings.quizPct;
+  const okQ = q && typeof q === 'object' && !Array.isArray(q) &&
+    ['V', 'P', 'K'].every((t) => Number.isFinite(q[t]) && q[T] >= 0 && q[t] <= 100);
+  settings.quizPct = okQ ? q : null;
+  if (!/^\d{2}:\d{2}$/.test(settings.gymTime || '')) settings.gymTime = '17:00';
+  if (!settings.times || typeof settings.times !== 'object') settings.times = {};
+  Object.keys(settings.times).forEach((k) => { if (!/^\d{2}:\d{2}$/.test(settings.times[k])) delete settings.times[k]; });
+
+  const swap = (obj) => { if (obj && obj.pick && obj.pick.wake === 'Banana + warm milk') obj.pick.wake = 'Dates + warm milk'; };
+  // defaults and every day's pick
+  Object.keys(defaults).forEach((id) => { if (defaults[id] === 'Banana + warm milk') defaults[id] = 'Dates + warm milk'; });
+  Object.keys(days).forEach((k) => swap(days[k]));
+  if (!Object.keys(days).length && !weights.length) { /* new user */ }
+  else if (!settings.onboarded && !settings.type) {
+    settings.type = 'P';
+    if (!settings.goal || settings.goal === 'maintain') settings.goal = 'gain';
+    settings.onboarded = true;
+  }
+  // Hardening: ensure shapes are valid before use
+  if (!days || typeof days !== 'object' || Array.isArray(days)) days = {};
+  if (!Array.isArray(weights)) weights = [];
+  weights = weights.filter((w) => w && w.date === 'string' && typeof w.kg === 'number');
+  Object.keys(days).forEach((k) => {
+    days[k] = Object.assign(blankDay(), days[k]);
+    days[k].status = days[k].status || {};
+    days[k].pick = days[k].pick || {};
+    days[k].cheats = days[k].cheats || {};
+  });
+  if (!(settings.diet in RANK)) settings.diet = 'nonveg';
+  if (!GOALS[settings.goal]) settings.goal = 'maintain';
+  if (settings.type && !TYPES[settings.type]) settings.type = null;
+  if (!settings.times || typeof settings.times !== 'object') settings.times = {};
+})();
+
+// ---------- Overlay / toast ----------
+let lastFocus = null;
+function openOverlay(html, opts) {
+  const ov = $('#overlay'), panel = ov.querySelector('.overlay-panel');
+  if (ov.hidden) lastFocus = document.activeElement;
+  panel.innerHTML = html;
+  ov.hidden = false;
+  ov.onchange = null;
+  // A5: locked overlays ignore Escape and backdrop clicks.
+  delete ov.dataset.locked;
+  if (opts && opts.locked) ov.dataset.locked = '1';
+  const focusables = () => [...panel.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter((x) => !x.disabled && x.offsetParent !== null);
+  const first = focusables()[0];
+  if (first) first.focus();
+  ov.onkeydown = (e) => {
+    if (e.key === 'Escape') { if (!ov.dataset.locked) closeOverlay(); return; }
+    if (e.key !== 'Tab') return;
+    const f = focusables();
+    if (!f.length) return;
+    const firstEl = f[0], lastEl = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === firstEl) { e.preventDefault(); lastEl.focus(); }
+    else if (!e.shiftKey && document.activeElement === lastEl) { e.preventDefault(); firstEl.focus(); }
+  };
+  ov.onclick = (e) => { if (e.target === ov && !ov.dataset.locked) closeOverlay(); };
+}
+function closeOverlay() {
+  const ov = $('#overlay');
+  ov.hidden = true;
+  delete ov.dataset.locked;
+  ov.querySelector('.overlay-panel').innerHTML = '';
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+let toastTimer = null;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+function applyPrefs() {
+  const html = document.documentElement;
+  html.dataset.text = settings.textSize || 'normal';
+  const theme = settings.theme || 'auto';
+  html.dataset.theme = theme === 'auto'
+    ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+    : theme;
+}
+
+function download(filename, mime, text) {
+  if (navigator.standalone) toast('To download, open this page in Safari.');
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
 // ---------- Today ----------
 let viewKey = todayKey();
+let followToday = true;
 let cheatOpen = null;
+let diyaSlot = null;
 
-function renderToday() {
+function dayNumber(k) { return Math.floor(Date.parse(k + 'T00:00:00') / 864e5); }
+function dailyCard(k) {
+  const L = typeLetters();
+  const eligible = DAILY.filter((c) => !c.for || c.for.includes('all') || c.for.some((f) => L.includes(f)));
+  const list = eligible.length ? eligible : DAILY;
+  return list[dayNumber(k) % list.length];
+}
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 5) return { hi: 'Shubh ratri', line: 'A quiet end to the day. Warm milk helps sleep.' };
+  if (h < 12) return { hi: 'Shubhodayam', line: 'Good morning. A warm start steadies the whole day.' };
+  if (h < 17) return { hi: 'Shubh madhyahnam', line: 'Good afternoon. Keep lunch calm and unhurried.' };
+  if (h < 21) return { hi: 'Shubh sayankalam', line: 'Good evening. Let dinner be light and early.' };
+  return { hi: 'Shubh ratri', line: 'Good night. Rest well, digest well.' };
+}
+
+function ringSvg(done, total) {
+  const r = 44, c = 2 * Math.PI * r, pct = total ? done / total : 0;
+  return `<div class="ring" role="img" aria-label="${done} of ${total} main meals eaten">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--line)" stroke-width="8"/>
+      <circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--clay)" stroke-width="8" stroke-linecap="round"
+        stroke-dasharray="${(c * pct).toFixed(1)} ${c.toFixed(1)}" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+    </svg>
+    <span class="illus">${ART.pot}</span>
+  </div>`;
+}
+
+function renderToday(el) {
   const d = getDay(viewKey);
   const isToday = viewKey === todayKey();
   const dt = new Date(viewKey + 'T12:00:00');
-  $('#dateLabel').textContent = (isToday ? 'Today · ' : '') + dt.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
-  $('#goToday').hidden = isToday;
-  $('#dietSel').value = settings.diet;
-  $('#gymToggle').checked = !!d.gym;
-  $('#shiftSel').value = String(d.shift || 0);
-
+  const g = greeting();
   const list = slotsFor(viewKey);
   const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
   let nextIdx = -1;
   if (isToday) nextIdx = list.findIndex((s) => !d.status[s.id] && s.min + 45 >= nowMin);
 
-  $('#slots').innerHTML = list.map((s, i) => {
-    const st = d.status[s.id];
-    const opt = pickedOption(viewKey, s);
-    const opts = optionsFor(s);
-    const pill = st === 'done' ? '<span class="pill done">Eaten</span>'
-      : st === 'skip' ? '<span class="pill skip">Skipped</span>'
-      : st === 'cheat' ? '<span class="pill cheat">Ate out</span>'
-      : i === nextIdx ? '<span class="pill now">Up next</span>' : '';
-    const notes = [];
-    if (s.note) notes.push(s.note);
-    if (d.gym && s.gymNote) notes.push(s.gymNote);
-    if (s.optional) notes.push('Optional.');
-    if (st === 'cheat' && d.cheats[s.id]) notes.push('You had: ' + esc(d.cheats[s.id]));
-    const cheatForm = cheatOpen === s.id ? `
-      <form class="cheat-form" data-cheat="${s.id}">
-        <input id="cheat-${s.id}" placeholder="What did you eat? e.g. fried rice" maxlength="80" required>
-        <button class="btn primary" type="submit">Log</button>
-      </form>` : '';
-    return `<li class="slot${i === nextIdx ? ' now' : ''}${st ? ' done' : ''}">
-      <div class="slot-time">${fmt(s.min)}${d.shift ? `<small>was ${fmt(s.baseMin)}</small>` : ''}</div>
-      <div class="slot-body">
-        <div class="slot-head"><span class="slot-label">${esc(s.label)}</span>${pill}</div>
-        ${opts.length > 1
-          ? `<select id="pick-${s.id}" data-pick="${s.id}" aria-label="${esc(s.label)} choice">${opts.map((o) => `<option${o.name === opt.name ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}</select>`
-          : `<div>${esc(opt.name)}</div>`}
-        ${notes.length ? `<p class="note">${notes.join(' ')}</p>` : ''}
-        <div class="actions">
-          <button class="btn${st === 'done' ? ' sel-done' : ''}" data-mark="done" data-slot="${s.id}">Eaten</button>
-          <button class="btn${st === 'skip' ? ' sel-skip' : ''}" data-mark="skip" data-slot="${s.id}">Skipped</button>
-          <button class="btn${st === 'cheat' ? ' sel-cheat' : ''}" data-mark="cheat" data-slot="${s.id}">Ate something else</button>
-        </div>
-        ${cheatForm}
-      </div>
-    </li>`;
-  }).join('');
+  // Ring: main meals done only (Amendment 15)
+  const mains = list.filter((s) => s.main);
+  const doneMains = mains.filter((s) => d.status[s.id] === 'done').length;
 
-  renderBanner(list, d);
-  const mains = SLOTS.filter((s) => s.main);
-  const doneCount = list.filter((s) => d.status[s.id] === 'done').length;
-  $('#daySummary').textContent = `${doneCount} of ${list.length} on plan · main meals ${mains.filter((s) => d.status[s.id]).length}/${mains.length} logged`;
-  $('#streakNum').textContent = streak();
-}
+  const typeBadgeText = settings.type && TYPES[settings.type] ? TYPES[settings.type].name : '';
+  const card = dailyCard(viewKey);
+  const dayNum = dayNumber(viewKey);
+  const oddDay = dayNum % 2 === 1;
+  const wisdomList = DAILY_VERSES.concat(typeof GUT_DAILY !== 'undefined' ? GUT_DAILY : []);
+  const wisdom = wisdomList[dayNum % wisdomList.length];
 
-function renderBanner(list, d) {
-  const b = $('#banner');
+  // Next-meal banner (Ate out / skipped handling below in renderTodayBanner)
+  let bannerHtml = '';
   const lastCheat = [...list].reverse().find((s) => d.status[s.id] === 'cheat');
   const skipped = list.filter((s) => s.main && d.status[s.id] === 'skip');
   if (lastCheat) {
     const next = list.slice(list.indexOf(lastCheat) + 1).find((s) => !d.status[s.id]);
-    if (next) {
-      const light = optionsFor(next).find((o) => o.light) || optionsFor(next)[0];
-      b.innerHTML = `<strong>No stress about the ${esc(lastCheat.label.toLowerCase())}.</strong> Keep ${esc(next.label.toLowerCase())} at ${fmt(next.min)} light: ${esc(light.name)}. Have warm water, not a cold drink.`;
-    } else {
-      b.innerHTML = `<strong>Ate out today, that's fine.</strong> Warm milk before bed and back on plan tomorrow.`;
-    }
-    b.hidden = false;
+    bannerHtml = next
+      ? `<div class="banner"><strong>No stress about the ${esc(lastCheat.label.toLowerCase())}.</strong> Keep ${esc(next.label.toLowerCase())} at ${fmt(next.min)} light: ${esc((optionsFor(next).find((o) => o.light) || optionsFor(next)[0] || {}).name || next.label)}. Have warm water, not a cold drink.</div>`
+      : `<div class="banner"><strong>Ate out today, that's fine.</strong> Warm milk before bed and back on plan tomorrow.</div>`;
   } else if (skipped.length) {
-    b.innerHTML = `<strong>${esc(skipped[0].label)} skipped.</strong> Skipping meals raises pitta. Have a banana or a handful of nuts now if you can.`;
-    b.hidden = false;
-  } else {
-    b.hidden = true;
+    bannerHtml = `<div class="banner warn"><strong>${esc(skipped[0].label)} skipped.</strong> Skipped meals unsettle digestion for every type. Have a fruit or a few nuts now if you can.</div>`;
+  } else if (nextIdx >= 0) {
+    const nxt = list[nextIdx];
+    const diff = nxt.min - nowMin;
+    if (diff > 0 && diff <= 90) bannerHtml = `<div class="banner"><strong>${esc(nxt.label)} in ${diff} min.</strong> ${esc((pickedOption(viewKey, nxt) || {}).name || '')}</div>`;
   }
+
+  // Eating out (Amendment 2)
+  const mealKey = currentMealKey();
+  const meal = SLOTS.find((s) => s.id === mealKey) || SLOTS[0];
+  const outLists = (() => {
+    const L = typeLetters();
+    const keys = L.length ? L : ['V', 'P', 'K']; // union of all when unset
+    const merge = (which) => {
+      const seen = new Set(), out = [];
+      keys.forEach((k) => (EAT_OUT[k] && EAT_OUT[k][mealKey] ? EAT_OUT[k][mealKey][which] : []).forEach((x) => {
+        if (!seen.has(x)) { seen.add(x); out.push(x); }
+      }));
+      return out;
+    };
+    return { safe: merge('safe'), avoid: merge('avoid') };
+  })();
+  const hideRe = settings.diet === 'veg' ? /chicken|egg|fish|prawn|mutton|meat|keema|crab|kebab|biryani/i
+    : settings.diet === 'egg' ? /chicken|fish|prawn|mutton|meat|keema|crab|kebab|biryani/i : null;
+  if (hideRe) { outLists.safe = outLists.safe.filter((x) => !hideRe.test(x)); outLists.avoid = outLists.avoid.filter((x) => !hideRe.test(x)); }
+  const eatOut = `<details class="details">
+    <summary>Eating out? (${esc(meal.label)})</summary>
+    <div class="stack">
+      <div><p class="card-title">Order this</p><ul>${outLists.safe.map((x) => `<li>${esc(x)}</li>`).join('') || '<li class="muted">–</li>'}</ul></div>
+      <div><p class="card-title">Skip this</p><ul>${outLists.avoid.map((x) => `<li>${esc(x)}</li>`).join('') || '<li class="muted">–</li>'}</ul></div>
+      <p class="small muted">Traditional guidance only. Choose what suits your body today.</p>
+    </div>
+  </details>`;
+
+  const slotHtml = list.map((s, i) => {
+    const st = d.status[s.id];
+    const opt = pickedOption(viewKey, s) || { name: '—' };
+    const opts = optionsFor(s);
+    const fallbackKey = (s.id === 'wake' || s.id === 'bed' || s.id === 'postgym') ? 'fDrink' : 'fRice';
+    const icoKey = (opt.ing && opt.ing[0] && iconFor(findFood(opt.ing[0]))) || fallbackKey;
+    const ico = `<span class="fico" aria-hidden="true">${ficoHtml(icoKey)}</span>`;
+    const pill = st === 'done' ? '<span class="pill">Eaten</span>'
+      : st === 'skip' ? '<span class="pill">Skipped</span>'
+      : st === 'cheat' ? '<span class="pill">Ate out</span>'
+      : i === nextIdx ? '<span class="pill">Up next</span>' : '';
+    const notes = [];
+    if (s.main && GOALS[settings.goal] && GOALS[settings.goal].portion) notes.push(esc(GOALS[settings.goal].portion));
+    if (s.note) notes.push(esc(s.note));
+    if (d.gym && s.gymNote) notes.push(esc(s.gymNote));
+    if (s.optional) notes.push('Optional.');
+    if (st === 'cheat' && d.cheats[s.id]) notes.push('You had: ' + esc(d.cheats[s.id]));
+    const cheatForm = cheatOpen === s.id ? `
+      <form class="form-row" data-cheat="${s.id}">
+        <input class="search" id="cheat-${s.id}" placeholder="What did you eat? e.g. fried rice" maxlength="80" aria-label="What did you eat?" required>
+        <button class="btn primary" type="submit">Log</button>
+      </form>` : '';
+    const diya = diyaSlot === s.id ? `<span class="diya" aria-hidden="true">${ART.lamp}</span>` : '';
+    return `<div class="slot${st ? (st === 'skip' ? ' skipped' : ' done') : ''}${i === nextIdx ? ' now' : ''}">
+      <div class="slot-time">${fmt(s.min)}${d.shift ? `<small>was ${fmt(s.baseMin)}</small>` : ''}</div>
+      <div class="slot-head">${ico}<span class="card-title">${esc(s.label)}</span>${pill}${diya}</div>
+      ${opts.length > 1
+        ? `<select data-pick="${s.id}" aria-label="${esc(s.label)} choice">${opts.map((o) => `<option value="${esc(o.name)}"${o.name === opt.name ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}</select>`
+        : `<div>${esc(opt.name)}</div>`}
+      ${opt && opt.note ? `<p class="small muted">${esc(opt.note)}</p>` : ''}
+      ${notes.length ? `<p class="small muted">${notes.join(' ')}</p>` : ''}
+      <div class="slot-actions btn-row">
+        <button class="btn${st === 'done' ? ' primary' : ''}" data-mark="done" data-slot="${s.id}">Eaten</button>
+        <button class="btn${st === 'skip' ? ' danger' : ''}" data-mark="skip" data-slot="${s.id}">Skipped</button>
+        <button class="btn${st === 'cheat' ? ' ghost' : ''}" data-mark="cheat" data-slot="${s.id}">Ate something else</button>
+      </div>
+      ${cheatForm}
+    </div>`;
+  }).join('');
+
+  const prevNext = `<div class="btn-row">
+    <button class="btn ghost" data-day="-1">← Previous day</button>
+    ${isToday ? '' : '<button class="btn ghost" data-day="1">Next day →</button>'}
+    ${isToday ? '' : '<button class="btn" data-day="0">Back to today</button>'}
+  </div>`;
+
+  el.innerHTML = `
+  <div class="card hero">
+    <div class="hero-art">${ART.village}</div>
+    <div class="row">
+      <div class="stack">
+        <p class="card-title">${esc(g.hi)}</p>
+        <p class="muted">${esc(g.line)}</p>
+        <p class="verse-strip">${esc(HERO_VERSE.en)} <span class="small muted">— ${esc(HERO_VERSE.ref)}</span></p>
+        <p class="small muted">${isToday ? 'Today · ' : ''}${dt.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}</p>
+      </div>
+      ${ringSvg(doneMains, mains.length)}
+    </div>
+    <p class="small muted">${doneMains} of ${mains.length} main meals eaten today · streak ${streak()} day${streak() === 1 ? '' : 's'}</p>
+    ${prevNext}
+  </div>
+
+  <div class="card daily">
+    ${oddDay
+      ? `<p class="card-title">Wisdom for today</p><p>${esc(wisdom.text)} <span class="small muted">— ${esc(wisdom.ref)}</span></p>`
+      : `<p class="card-title">One small thing today</p><p>${esc(card.text)}</p>`}
+  </div>
+
+  ${bannerHtml}
+
+  <p class="section-title">Your day</p>
+  <div class="stack stagger">${slotHtml}</div>
+
+  <div class="card stack">
+    <label class="row" for="gymToggle"><input type="checkbox" id="gymToggle"${d.gym ? ' checked' : ''}> <span>Gym day today</span></label>
+    <div class="form-row field">
+      <label for="shiftSel">Running late?</label>
+      <select id="shiftSel">
+        <option value="0"${!d.shift ? ' selected' : ''}>On time</option>
+        <option value="30"${d.shift === 30 ? ' selected' : ''}>30 min late</option>
+        <option value="60"${d.shift === 60 ? ' selected' : ''}>1 hr late</option>
+        <option value="90"${d.shift === 90 ? ' selected' : ''}>1.5 hr late</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card stack">${eatOut}</div>
+
+  ${typeBadgeText ? '' : `<p class="small muted" style="text-align:center">Tip: find your likely constitution in Me to tune these meals.</p>`}
+  `;
+}
+
+function currentMealKey() {
+  const m = new Date().getHours() * 60 + new Date().getMinutes();
+  if (m < 10 * 60 + 30) return 'breakfast';
+  if (m < 15 * 60 + 30) return 'lunch';
+  if (m < 18 * 60 + 30) return 'snack';
+  return 'dinner';
 }
 
 function mark(slotId, status) {
   const d = editDay(viewKey);
   if (status === 'cheat') {
     if (d.status[slotId] === 'cheat') { delete d.status[slotId]; delete d.cheats[slotId]; cheatOpen = null; }
-    else { cheatOpen = slotId; renderToday(); $('#cheat-' + slotId)?.focus(); return; }
+    else { cheatOpen = slotId; render('today'); setTimeout(() => $('#cheat-' + slotId)?.focus(), 60); return; }
   } else {
     d.status[slotId] = d.status[slotId] === status ? undefined : status;
     if (!d.status[slotId]) delete d.status[slotId];
     delete d.cheats[slotId];
     cheatOpen = null;
+    if (status === 'done') {
+      diyaSlot = slotId;
+      setTimeout(() => { if (diyaSlot === slotId) { diyaSlot = null; } }, 2200);
+    }
   }
-  save(); renderToday();
+  save(); render('today');
+  // Keep keyboard focus on the equivalent button in the same slot after re-render.
+  const btn = document.querySelector(`[data-mark="${status}"][data-slot="${slotId}"]`);
+  if (btn) btn.focus();
 }
 
-$('#slots').addEventListener('click', (e) => {
+// ---------- Progress ----------
+function bandAt(weeks, w0) {
+  const g = GOALS[settings.goal] || GOALS.maintain;
+  return [w0 + g.weekly[0] * weeks, w0 + g.weekly[1] * weeks];
+}
+function rateStatus(rate) {
+  const g = GOALS[settings.goal] || GOALS.maintain;
+  const lo = Math.min(g.weekly[0], g.weekly[1]), hi = Math.max(g.weekly[0], g.weekly[1]);
+  const dir = g.dir || settings.goal; // 'gain' | 'lose' | 'maintain'
+  if (rate >= lo && rate <= hi) return 'On track';
+  if (rate < lo) {
+    if (dir === 'gain') return 'Slower than your goal';
+    if (dir === 'lose') return 'Faster than your goal';
+    return 'Losing more than planned';
+  }
+  if (dir === 'gain') return 'Faster than your goal';
+  if (dir === 'lose') return 'Slower than your goal';
+  return 'Gaining more than planned';
+}
+function chartSvg(w) {
+  const W = 340, H = 180, L = 12, R = 12, T = 14, B = 26;
+  const t0 = Date.parse(w[0].date), t1 = Math.max(Date.parse(w[w.length - 1].date), t0 + 864e5);
+  const weeks = (t1 - t0) / 6048e5;
+  const [bLo, bHi] = bandAt(weeks, w[0].kg);
+  const ks = w.map((x) => x.kg);
+  const lo = Math.floor(Math.min(...ks, bLo) - 0.5), hi = Math.ceil(Math.max(...ks, bHi) + 0.5);
+  const x = (t) => L + ((t - t0) / (t1 - t0)) * (W - L - R);
+  const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+  const pts = w.map((p) => `${x(Date.parse(p.date)).toFixed(1)},${y(p.kg).toFixed(1)}`);
+  const band = `${x(t0)},${y(w[0].kg)} ${x(t1)},${y(bHi)} ${x(t1)},${y(bLo)}`;
+  const ticks = [lo, (lo + hi) / 2, hi];
+  const end = w[w.length - 1];
+  const fmtD = (t) => new Date(t).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  const g = GOALS[settings.goal] || GOALS.maintain;
+  const bandLoW = Math.min(g.weekly[0], g.weekly[1]), bandHiW = Math.max(g.weekly[0], g.weekly[1]);
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight trend">
+    ${ticks.map((v) => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/>`).join('')}
+    <polygon points="${band}" fill="var(--turmeric)" opacity="0.25" stroke="none"/>
+    <polyline points="${pts.join(' ')}" fill="none" stroke="var(--clay)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${x(Date.parse(end.date))}" cy="${y(end.kg)}" r="4.5" fill="var(--clay)"/>
+  </svg>
+  <div class="row small muted" style="justify-content:space-between"><span>${esc(fmtD(t0))}</span><span>${lo.toFixed(1)}–${hi.toFixed(1)} kg</span><span>${esc(fmtD(t1))}</span></div>
+  <p class="small muted">Shaded area is your goal band (${bandLoW} to ${bandHiW} kg a week for “${esc(g.label.toLowerCase())}”).</p></div>`;
+}
+function weekSummary() {
+  let eaten = 0, total = 0;
+  for (let n = 0; n < 7; n++) {
+    const k = addDays(todayKey(), -n);
+    const st = getDay(k).status;
+    SLOTS.filter((s) => s.main).forEach((s) => {
+      total++;
+      if (st[s.id] === 'done' || st[s.id] === 'cheat') eaten++;
+    });
+  }
+  return { eaten, total, pct: total ? Math.round((eaten / total) * 100) : 0 };
+}
+
+function renderProgress(el) {
+  const w = [...weights].sort((a, b) => (a.date < b.date ? -1 : 1));
+  const ws = weekSummary();
+  const sk = streak();
+  let body = '';
+
+  const form = `<form id="wForm" class="card stack">
+    <p class="card-title">Weekly weigh-in</p>
+    <div class="form-row field">
+      <label for="wDate">Date</label>
+      <input type="date" id="wDate" value="${todayKey()}" required>
+    </div>
+    <div class="form-row field">
+      <label for="wKg">Weight (kg)</label>
+      <input type="number" id="wKg" min="30" max="150" step="0.1" inputmode="decimal" required>
+    </div>
+    <p class="small muted" id="wErr" hidden style="color:var(--clay)"></p>
+    <button class="btn primary" type="submit">Save weigh-in</button>
+  </form>`;
+
+  if (!w.length) {
+    body = `${form}
+    <div class="card empty">
+      <p class="card-title">No weigh-ins yet</p>
+      <p class="muted">Step on the scale once a week — same time, same clothes. Small notes, big picture.</p>
+    </div>`;
+  } else {
+    const first = w[0], last = w[w.length - 1];
+    const weeks = (Date.parse(last.date) - Date.parse(first.date)) / 6048e5;
+    const change = last.kg - first.kg;
+    const rate = weeks >= 1 ? change / weeks : null;
+    const status = rate === null ? 'Need 1+ week of data' : rateStatus(rate);
+    const listHtml = [...w].reverse().map((x) => `<li class="row" style="justify-content:space-between"><span>${esc(new Date(x.date + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }))}</span><span><b>${x.kg.toFixed(1)} kg</b> <button class="btn ghost" data-del="${esc(x.date)}" aria-label="Delete entry for ${esc(x.date)}">Delete</button></span></li>`).join('');
+    body = `${form}
+    <div class="card stack">
+      <p class="card-title">Trend</p>
+      ${w.length < 2 ? '<p class="muted">Add one more weigh-in to see the trend line.</p>' : chartSvg(w)}
+      <div class="row">
+        <div class="stack"><span class="small muted">Latest</span><b>${last.kg.toFixed(1)} kg</b></div>
+        <div class="stack"><span class="small muted">Change</span><b>${change >= 0 ? '+' : ''}${change.toFixed(1)} kg</b></div>
+        <div class="stack"><span class="small muted">Per week</span><b>${rate === null ? '–' : (rate >= 0 ? '+' : '') + rate.toFixed(2)}</b></div>
+        <div class="stack"><span class="small muted">Status</span><b>${esc(status)}</b></div>
+      </div>
+      <ul class="stack small">${listHtml}</ul>
+    </div>`;
+  }
+
+  el.innerHTML = `
+  <div class="card hero">
+    <div class="hero-art">${ART.banyan}</div>
+    <div class="row">
+      <div class="stack">
+        <p class="card-title">Your progress</p>
+        <p class="muted">Steady steps, steady strength.</p>
+      </div>
+      <span class="pill">${sk} day${sk === 1 ? '' : 's'} streak</span>
+    </div>
+  </div>
+  ${body}
+  <div class="card stack">
+    <p class="card-title">This week</p>
+    <p><b>${ws.pct}%</b> of main meals eaten over the last 7 days (${ws.eaten} of ${ws.total}).</p>
+    ${GOALS[settings.goal] && GOALS[settings.goal].note ? `<p class="small muted">${esc(GOALS[settings.goal].note)}</p>` : ''}
+  </div>`;
+
+  const formEl = $('#wForm');
+  if (formEl) formEl.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const date = $('#wDate').value, kg = parseFloat($('#wKg').value);
+    const err = $('#wErr');
+    if (!date || !(kg >= 30 && kg <= 150)) { err.textContent = 'Enter a date and a weight between 30 and 150 kg.'; err.hidden = false; return; }
+    err.hidden = true;
+    weights = weights.filter((x) => x.date !== date).concat({ date, kg: Math.round(kg * 10) / 10 });
+    save(); renderProgress($('#view'));
+  });
+  el.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => {
+    weights = weights.filter((x) => x.date !== b.dataset.del);
+    save(); renderProgress($('#view'));
+  }));
+}
+
+// ---------- Router ----------
+let currentTab = 'today';
+const RENDERERS = {
+  today: renderToday,
+  foods: (el) => renderFoods(el),
+  learn: (el) => renderLearn(el),
+  progress: renderProgress,
+  me: (el) => renderMe(el),
+};
+function render(tab) {
+  const sameTab = (tab === currentTab);
+  const y = window.scrollY;
+  currentTab = tab;
+  const el = $('#view');
+  (RENDERERS[tab] || renderToday)(el);
+  document.querySelectorAll('.tabs button').forEach((b) => {
+    if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
+  if (!sameTab) {
+    el.classList.remove('fade-in');
+    void el.offsetWidth;
+    el.classList.add('fade-in');
+    window.scrollTo(0, 0);
+  } else {
+    // Same-tab update: restore scroll position, don't move focus.
+    requestAnimationFrame(() => window.scrollTo(0, y));
+  }
+  const badge = $('#typeBadge');
+  if (settings.type && TYPES[settings.type]) {
+    badge.hidden = false;
+    badge.textContent = TYPES[settings.type].name;
+    badge.className = 'badge ' + settings.type.slice(0, 1);
+  } else badge.hidden = true;
+}
+
+// ---------- Global event wiring (delegated on #view) ----------
+const view = $('#view');
+view.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-mark]');
-  if (btn) mark(btn.dataset.slot, btn.dataset.mark);
+  if (btn) { mark(btn.dataset.slot, btn.dataset.mark); return; }
+  const day = e.target.closest('[data-day]');
+  if (day) {
+    const off = Number(day.dataset.day) || 0;
+    if (off === 0) { viewKey = todayKey(); followToday = true; }
+    else { viewKey = addDays(viewKey, off); followToday = false; }
+    cheatOpen = null;
+    render('today');
+    return;
+  }
 });
-$('#slots').addEventListener('change', (e) => {
+view.addEventListener('change', (e) => {
   const sel = e.target.closest('[data-pick]');
-  if (!sel) return;
-  editDay(viewKey).pick[sel.dataset.pick] = sel.value;
-  defaults[sel.dataset.pick] = sel.value;
-  save(); renderToday();
+  if (sel) {
+    editDay(viewKey).pick[sel.dataset.pick] = sel.value;
+    defaults[sel.dataset.pick] = sel.value;
+    save(); render('today'); return;
+  }
+  if (e.target.id === 'gymToggle') { editDay(viewKey).gym = e.target.checked; save(); render('today'); return; }
+  if (e.target.id === 'shiftSel') { editDay(viewKey).shift = Number(e.target.value); save(); render('today'); return; }
 });
-$('#slots').addEventListener('submit', (e) => {
+view.addEventListener('submit', (e) => {
   const f = e.target.closest('[data-cheat]');
   if (!f) return;
   e.preventDefault();
@@ -174,137 +613,62 @@ $('#slots').addEventListener('submit', (e) => {
   if (!txt) return;
   const d = editDay(viewKey);
   d.status[id] = 'cheat'; d.cheats[id] = txt; cheatOpen = null;
-  save(); renderToday();
-});
-$('#prevDay').onclick = () => { viewKey = addDays(viewKey, -1); cheatOpen = null; renderToday(); };
-$('#nextDay').onclick = () => { viewKey = addDays(viewKey, 1); cheatOpen = null; renderToday(); };
-$('#goToday').onclick = () => { viewKey = todayKey(); renderToday(); };
-$('#dietSel').onchange = (e) => { settings.diet = e.target.value; save(); renderToday(); renderGrocery(); };
-$('#gymToggle').onchange = (e) => { editDay(viewKey).gym = e.target.checked; save(); renderToday(); };
-$('#shiftSel').onchange = (e) => { editDay(viewKey).shift = Number(e.target.value); save(); renderToday(); };
-
-// ---------- Eat out ----------
-let outKey = null;
-function currentMealKey() {
-  const m = new Date().getHours() * 60 + new Date().getMinutes();
-  if (m < 10 * 60 + 30) return 'breakfast';
-  if (m < 15 * 60 + 30) return 'lunch';
-  if (m < 18 * 60 + 30) return 'snack';
-  return 'dinner';
-}
-function renderOut() {
-  outKey = outKey || currentMealKey();
-  $('#outSeg').innerHTML = Object.entries(EAT_OUT).map(([k, v]) => `<button data-out="${k}" class="${k === outKey ? 'on' : ''}">${v.label}</button>`).join('');
-  const g = EAT_OUT[outKey];
-  let safe = g.safe;
-  if (settings.diet === 'veg') safe = safe.filter((x) => !/chicken|egg/i.test(x));
-  else if (settings.diet === 'egg') safe = safe.filter((x) => !/chicken/i.test(x));
-  $('#outGrid').innerHTML = `
-    <div class="out-card safe"><h3>Order this</h3><ul>${safe.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>
-    <div class="out-card avoid"><h3>Skip this</h3><ul>${g.avoid.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
-}
-$('#outSeg').addEventListener('click', (e) => { const b = e.target.closest('[data-out]'); if (b) { outKey = b.dataset.out; renderOut(); } });
-
-// ---------- Weight ----------
-function renderWeight() {
-  const w = [...weights].sort((a, b) => (a.date < b.date ? -1 : 1));
-  $('#wList').innerHTML = [...w].reverse().map((x) => `<li><span>${new Date(x.date + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span><span><b>${x.kg.toFixed(1)} kg</b> <button data-del="${x.date}" aria-label="Delete ${x.date}">Delete</button></span></li>`).join('');
-  if (!w.length) { $('#wStats').innerHTML = ''; $('#wChart').innerHTML = '<p class="muted" style="padding:8px">Log your first weigh-in to start the trend.</p>'; return; }
-  const first = w[0], last = w[w.length - 1];
-  const weeks = (Date.parse(last.date) - Date.parse(first.date)) / 6048e5;
-  const change = last.kg - first.kg;
-  const rate = weeks >= 1 ? change / weeks : null;
-  const status = rate === null ? 'Need 1+ week of data' : rate < 0.25 ? 'Below target, eat a bit more' : rate > 0.5 ? 'Faster than target' : 'On track';
-  $('#wStats').innerHTML = `
-    <div class="stat"><span>Latest</span><b>${last.kg.toFixed(1)} kg</b></div>
-    <div class="stat"><span>Change</span><b>${change >= 0 ? '+' : ''}${change.toFixed(1)} kg</b></div>
-    <div class="stat"><span>Per week</span><b>${rate === null ? '–' : (rate >= 0 ? '+' : '') + rate.toFixed(2)}</b></div>
-    <div class="stat"><span>Status</span><b style="font-size:1rem">${status}</b></div>`;
-  $('#wChart').innerHTML = w.length < 2 ? '<p class="muted" style="padding:8px">Add one more weigh-in to see the trend line.</p>' : chartSvg(w);
-}
-function chartSvg(w) {
-  const W = 340, H = 180, L = 40, R = 12, T = 14, B = 26;
-  const t0 = Date.parse(w[0].date), t1 = Math.max(Date.parse(w[w.length - 1].date), t0 + 864e5);
-  const weeks = (t1 - t0) / 6048e5;
-  const bandHi = w[0].kg + 0.5 * weeks, bandLo = w[0].kg + 0.25 * weeks;
-  const ks = w.map((x) => x.kg);
-  const lo = Math.floor(Math.min(...ks, w[0].kg) - 0.5), hi = Math.ceil(Math.max(...ks, bandHi) + 0.5);
-  const x = (t) => L + ((t - t0) / (t1 - t0)) * (W - L - R);
-  const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
-  const pts = w.map((p) => `${x(Date.parse(p.date)).toFixed(1)},${y(p.kg).toFixed(1)}`);
-  const band = `${x(t0)},${y(w[0].kg)} ${x(t1)},${y(bandHi)} ${x(t1)},${y(bandLo)}`;
-  const ticks = [lo, (lo + hi) / 2, hi];
-  const end = w[w.length - 1];
-  const fmtD = (t) => new Date(t).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight trend">
-    ${ticks.map((v) => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="10" fill="var(--muted)">${v.toFixed(1)}</text>`).join('')}
-    <polygon points="${band}" fill="var(--jade-soft)" stroke="none"/>
-    <polyline points="${pts.join(' ')}" fill="none" stroke="var(--jade)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${x(Date.parse(end.date))}" cy="${y(end.kg)}" r="4.5" fill="var(--ghee)"/>
-    <text x="${L}" y="${H - 8}" font-size="10" fill="var(--muted)">${fmtD(t0)}</text>
-    <text x="${W - R}" y="${H - 8}" font-size="10" fill="var(--muted)" text-anchor="end">${fmtD(t1)}</text>
-  </svg>
-  <p class="note" style="padding:4px 6px 0">Shaded area is the healthy gain range (0.25 to 0.5 kg a week).</p>`;
-}
-$('#wForm').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const date = $('#wDate').value, kg = parseFloat($('#wKg').value);
-  const err = $('#wErr');
-  if (!date || !(kg >= 30 && kg <= 150)) { err.textContent = 'Enter a date and a weight between 30 and 150 kg.'; err.hidden = false; return; }
-  err.hidden = true;
-  weights = weights.filter((x) => x.date !== date).concat({ date, kg: Math.round(kg * 10) / 10 });
-  $('#wKg').value = '';
-  save(); renderWeight();
-});
-$('#wKg').addEventListener('input', () => { $('#wErr').hidden = true; });
-$('#wList').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-del]');
-  if (!b) return;
-  weights = weights.filter((x) => x.date !== b.dataset.del);
-  save(); renderWeight();
+  save(); render('today');
 });
 
-// ---------- Grocery ----------
-function renderGrocery() {
-  const need = new Set(['Ghee', 'Almonds', 'Milk', 'Banana']);
-  const k = todayKey();
-  SLOTS.forEach((s) => { const o = pickedOption(k, s); if (o) o.ing.forEach((i) => need.add(i)); });
-  const rows = Object.entries(CATEGORY).map(([cat, items]) => {
-    const inCat = items.filter((i) => need.has(i));
-    if (!inCat.length) return '';
-    return `<div class="gcat"><h3>${cat}</h3>${inCat.map((i) => `
-      <label class="gitem${bought[i] ? ' got' : ''}"><input type="checkbox" id="g-${i.replace(/\W/g, '')}" data-g="${esc(i)}"${bought[i] ? ' checked' : ''}><span>${esc(i)}</span></label>`).join('')}</div>`;
-  }).join('');
-  $('#groceryList').innerHTML = rows;
+// ---------- Nav ----------
+const iconMap = { today: 'iconToday', foods: 'iconFoods', learn: 'iconLearn', progress: 'iconProgress', me: 'iconMe' };
+document.querySelectorAll('.tabs button').forEach((b) => {
+  const ico = b.querySelector('.ico');
+  if (ico && ART[iconMap[b.dataset.tab]]) ico.innerHTML = ART[iconMap[b.dataset.tab]];
+  b.addEventListener('click', () => render(b.dataset.tab));
+});
+$('#typeBadge').addEventListener('click', () => render('me'));
+
+// ---------- Boot ----------
+applyPrefs();
+save(); // persist migration result
+const brandMark = document.querySelector('.brand-mark');
+if (brandMark) brandMark.innerHTML = ART.grainLotusMark || ART.lotus;
+const brand = document.querySelector('.brand');
+if (brand) {
+  brand.setAttribute('role', 'button');
+  brand.setAttribute('tabindex', '0');
+  brand.setAttribute('aria-label', 'Annamaya — show the starting page');
+  brand.style.cursor = 'pointer';
+  brand.addEventListener('click', () => showWelcome());
+  brand.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showWelcome(); }
+  });
 }
-$('#groceryList').addEventListener('change', (e) => {
-  const c = e.target.closest('[data-g]');
-  if (!c) return;
-  if (c.checked) bought[c.dataset.g] = true; else delete bought[c.dataset.g];
-  save(); renderGrocery();
+render('today');
+if (!settings.disclaimerAccepted || !settings.onboarded) {
+  startOnboarding();
+}
+// Refresh Today every minute — only when Today is visible, no overlay open,
+// and the user isn't typing in a textarea/input or using a select.
+setInterval(() => {
+  if (document.hidden) return;
+  if (currentTab !== 'today' || viewKey !== todayKey()) return;
+  if (!$('#overlay').hidden) return;
+  const a = document.activeElement;
+  if (a && (a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || (a.tagName === 'INPUT' && a.type !== 'checkbox' && a.type !== 'radio'))) return;
+  if (cheatOpen) return;
+  if (followToday && viewKey !== todayKey()) viewKey = todayKey();
+  const y = window.scrollY;
+  renderToday($('#view'));
+  requestAnimationFrame(() => window.scrollTo(0, y));
+}, 60000);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && !cheatOpen && currentTab === 'today' && $('#overlay').hidden) {
+    if (followToday && viewKey !== todayKey()) viewKey = todayKey();
+    const y = window.scrollY;
+    renderToday($('#view'));
+    requestAnimationFrame(() => window.scrollTo(0, y));
+  }
 });
-$('#resetGrocery').onclick = () => { bought = {}; save(); renderGrocery(); };
-
-// ---------- Rules ----------
-$('#rulesList').innerHTML = RULES.map((r) => `<li>${esc(r)}</li>`).join('');
-
-// ---------- Tabs ----------
-const renders = { today: renderToday, out: renderOut, weight: renderWeight, grocery: renderGrocery, rules: () => {} };
-$('#tabs').addEventListener('click', (e) => {
-  const b = e.target.closest('[data-tab]');
-  if (!b) return;
-  document.querySelectorAll('#tabs button').forEach((x) => x.classList.toggle('on', x === b));
-  document.querySelectorAll('.tab').forEach((t) => { t.hidden = t.id !== 'tab-' + b.dataset.tab; });
-  renders[b.dataset.tab]();
-  window.scrollTo(0, 0);
-});
-
-$('#wDate').value = todayKey();
-renderToday();
-// Refresh "up next" every minute, but never while a cheat-meal note is being typed.
-setInterval(() => { if (!document.hidden && !cheatOpen && viewKey === todayKey()) renderToday(); }, 60000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden && !cheatOpen) renderToday(); });
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
+

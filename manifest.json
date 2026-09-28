@@ -1,14 +1,13 @@
 {
-  "name": "Pitta Plate",
-  "short_name": "Pitta Plate",
-  "description": "Daily pitta-balancing meal plan, tracker and eat-out guide.",
-  "start_url": "./index.html",
+  "name": "Annamaya · Vedic Lifestyle Diet",
+  "short_name": "Annamaya",
+  "description": "We become what we eat — Ayurvedic diet by your dosha: daily meals, food library and food wisdom.",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#EEF3F0",
-  "theme_color": "#1F5C52",
+  "theme_color": "#234B3B",
+  "background_color": "#F6F0E4",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" },
     { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
