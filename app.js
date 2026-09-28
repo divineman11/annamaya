@@ -350,6 +350,7 @@ function renderToday(el) {
         <p class="card-title">${esc(g.hi)}</p>
         <p class="muted">${esc(g.line)}</p>
         <p class="verse-strip">${esc(HERO_VERSE.en)} <span class="small muted">— ${esc(HERO_VERSE.ref)}</span></p>
+        ${typeof chewingShortHtml === 'function' ? chewingShortHtml() : ''}
         <p class="small muted">${isToday ? 'Today · ' : ''}${dt.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })}</p>
       </div>
       ${ringSvg(doneMains, mains.length)}
@@ -613,6 +614,13 @@ view.addEventListener('click', (e) => {
     render('today');
     return;
   }
+  const chew = e.target.closest('[data-chew-more]');
+  if (chew) {
+    openOverlay('<div class="card stack">' + chewingFullHtml() + '<button class="btn primary" data-chew-close>Close</button></div>');
+    const panel = $('#overlay .overlay-panel');
+    panel.onclick = (ev) => { if (ev.target.closest('[data-chew-close]')) closeOverlay(); };
+    return;
+  }
 });
 view.addEventListener('change', (e) => {
   const sel = e.target.closest('[data-pick]');
@@ -724,3 +732,4 @@ document.addEventListener('visibilitychange', () => {
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
+
