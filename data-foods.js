@@ -111,7 +111,7 @@ const FOODS = [
   // ---------- Dairy ----------
   { id:'milk', name:'Milk', aka:['paalu','doodh','milk','cow milk'], cat:'Dairy', type:'veg', V:1, P:1, K:0, why:'Classically nourishing and calming for Vata — take it warm with spices, alone, never with sour fruit.' },
   { id:'curd', name:'Curd (yogurt)', aka:['perugu','dahi','thayir','curd','yogurt'], cat:'Dairy', type:'veg', V:0, P:-1, K:-1, why:'Sour, heavy and heating — best at midday with a pinch of salt or sugar; traditionally avoided at night.' },
-  { id:'paneer', name:'Paneer', aka:['paneer','chenna','cottage cheese'], cat:'Dairy', type:'veg', V:0, P:0, K:-1, why:'Sweet, heavy and protein-rich — satisfying but Kapha-increasing; eat fresh with warming spices.' },
+  { id:'paneer', name:'Paneer', aka:['paneer','chenna','cottage cheese'], cat:'Dairy', type:'veg', V:0, P:1, K:-1, why:'Sweet, cooling and protein-rich — good for Pitta when fresh, unsalted and mildly spiced; heavy for Kapha, so keep portions small.' },
   { id:'butter', name:'Butter', aka:['venna','makhan','butter'], cat:'Dairy', type:'veg', V:1, P:0, K:-1, why:'Sweet and unctuous — lovely on warm rotis for Vata; heavy, so Kapha keeps it to a thin spread.' },
 
   // ---------- Oils & ghee ----------
@@ -204,3 +204,4 @@ function findFood(name) { // match an ingredient/meal word to a FOODS item by ex
   const n = String(name || '').toLowerCase().trim(); if (!n) return null;
   return FOODS.find((f) => f.name.toLowerCase() === n) || FOODS.find((f) => (f.aka || []).some((a) => a.toLowerCase() === n)) || FOODS.find((f) => f.name.toLowerCase().includes(n) || n.includes(f.name.toLowerCase().replace(/\s*\(.*\)/, ''))) || null; }
 function ficoHtml(key) { return key && typeof ART !== 'undefined' && ART[key] ? '<span class="fico" aria-hidden="true">' + ART[key] + '</span>' : ''; }
+

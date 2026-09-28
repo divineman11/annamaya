@@ -660,3 +660,10 @@ input[type="checkbox"], input[type="radio"] { width: 1.15rem; height: 1.15rem; a
 .type-pick select:focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
 .top { gap: 0.5rem; }
 
+.to-top { position: fixed; right: 16px; bottom: calc(76px + env(safe-area-inset-bottom)); width: 48px; height: 48px; border-radius: 50%; border: none; background: var(--forest); color: var(--on-accent); font-size: 1.4rem; font-weight: 800; box-shadow: 0 6px 18px rgba(0,0,0,.18); cursor: pointer; z-index: 40; display: flex; align-items: center; justify-content: center; }
+.to-top[hidden] { display: none !important; }
+.to-top:focus-visible { outline: 3px solid var(--turmeric); outline-offset: 3px; }
+@media (min-width: 600px) { .to-top { right: calc(50% - 280px + 16px); } }
+
+.details > summary { display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap; }
+.details > summary [lang='sa'] { font-family: 'Tiro Devanagari Sanskrit', serif; color: var(--muted); }

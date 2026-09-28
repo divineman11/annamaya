@@ -459,7 +459,7 @@ function chartSvg(w) {
     <circle cx="${x(Date.parse(end.date))}" cy="${y(end.kg)}" r="4.5" fill="var(--clay)"/>
   </svg>
   <div class="row small muted" style="justify-content:space-between"><span>${esc(fmtD(t0))}</span><span>${lo.toFixed(1)}–${hi.toFixed(1)} kg</span><span>${esc(fmtD(t1))}</span></div>
-  <p class="small muted">Shaded area is your goal band (${bandLoW} to ${bandHiW} kg a week for “${esc(g.label.toLowerCase())}”).</p></div>`;
+  <p class="small muted">Shaded area is your goal band (${bandLoW} to ${bandHiW} kg a week for "${esc(g.label.toLowerCase())}").</p></div>`;
 }
 function weekSummary() {
   let eaten = 0, total = 0;
@@ -590,6 +590,8 @@ function render(tab) {
     void el.offsetWidth;
     el.classList.add('fade-in');
     window.scrollTo(0, 0);
+    const tt = $('#toTop');
+    if (tt) tt.hidden = true;
   } else {
     // Same-tab update: restore scroll position, don't move focus.
     requestAnimationFrame(() => window.scrollTo(0, y));
@@ -673,6 +675,29 @@ if (!settings.disclaimerAccepted || !settings.onboarded) {
 } else {
   showWelcome();
 }
+// Scroll-to-top button
+const toTop = document.createElement('button');
+toTop.id = 'toTop';
+toTop.className = 'to-top';
+toTop.type = 'button';
+toTop.setAttribute('aria-label', 'Back to top');
+toTop.hidden = true;
+toTop.textContent = '↑';
+document.body.appendChild(toTop);
+let toTopTick = false;
+window.addEventListener('scroll', () => {
+  if (toTopTick) return;
+  toTopTick = true;
+  requestAnimationFrame(() => {
+    toTopTick = false;
+    toTop.hidden = window.scrollY < 500;
+  });
+}, { passive: true });
+toTop.addEventListener('click', () => {
+  window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  const b = document.querySelector('.brand');
+  if (b) b.focus({ preventScroll: true });
+});
 // Refresh Today every minute — only when Today is visible, no overlay open,
 // and the user isn't typing in a textarea/input or using a select.
 setInterval(() => {
@@ -699,4 +724,3 @@ document.addEventListener('visibilitychange', () => {
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
-

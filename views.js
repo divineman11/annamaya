@@ -31,6 +31,113 @@ function _settingsChips(list, current, onPick) {
 return list.map((x) => `<button class="chip${x.v === current ? ' on' : ''}" aria-pressed="${x.v === current ? 'true' : 'false'}" data-set="${x.v}">${esc(x.t)}</button>`).join('');
 }
 
+// ---------- All references ----------
+
+function referencesHtml() {
+let h = '';
+let groupIndex = 0;
+const openAttr = () => (groupIndex++ === 0 ? ' open' : '');
+
+// 1. Classical texts
+h += `<details class="details"${openAttr()}><summary>Classical texts</summary>`;
+if (typeof SOURCES !== 'undefined') {
+h += '<div class="stack">';
+SOURCES.forEach((s) => {
+h += `<div class="card stack">
+<h3 class="card-title">${esc(s.title)}</h3>
+<p class="small muted">${esc(s.era)}</p>
+<p class="small">${esc(s.about)}</p>
+${s.link ? `<a class="btn ghost" href="${esc(s.link)}" target="_blank" rel="noopener">Read online</a>` : ''}
+</div>`;
+});
+h += '</div>';
+}
+h += '</details>';
+
+// 2. Verses quoted in the app
+h += `<details class="details"${openAttr()}><summary>Verses quoted in the app</summary>`;
+const refs = new Set();
+if (typeof VERSES !== 'undefined') VERSES.forEach((v) => { if (v.ref) refs.add(v.ref); });
+if (typeof AGNI !== 'undefined' && AGNI.verses) AGNI.verses.forEach((v) => { if (v.ref) refs.add(v.ref); });
+if (typeof GUT !== 'undefined' && GUT.ayurveda) GUT.ayurveda.forEach((v) => { if (v.ref) refs.add(v.ref); });
+if (typeof HERO_VERSE !== 'undefined' && HERO_VERSE.ref) refs.add(HERO_VERSE.ref);
+if (typeof CHEWING !== 'undefined' && CHEWING.classical) CHEWING.classical.forEach((v) => { if (v.ref) refs.add(v.ref); });
+h += '<ul class="small">' + Array.from(refs).sort().map((r) => `<li>${esc(r)}</li>`).join('') + '</ul>';
+h += '</details>';
+
+// 3. Charaka, Sushruta & Ashtanga Hridaya citations
+h += `<details class="details"${openAttr()}><summary>Charaka, Sushruta &amp; Ashtanga Hridaya citations</summary>`;
+const cites = new Set();
+if (typeof VIRUDDHA !== 'undefined') VIRUDDHA.forEach((v) => { if (v.source) cites.add(v.source); });
+if (typeof NONVEG !== 'undefined') {
+['ayurveda', 'upanishad', 'principle', 'vegetarian'].forEach((sec) => {
+if (NONVEG[sec]) NONVEG[sec].forEach((p) => { if (p.ref) cites.add(p.ref); });
+});
+}
+if (typeof AGNI !== 'undefined' && AGNI.ayurveda) AGNI.ayurveda.forEach((a) => { if (a.ref) cites.add(a.ref); });
+if (typeof DOSHA_GUIDE !== 'undefined') {
+DOSHA_GUIDE.forEach((d) => {
+['qualities', 'seats', 'whenItRises', 'tastes'].forEach((k) => {
+if (d[k] && d[k].ref) cites.add(d[k].ref);
+});
+});
+}
+if (typeof VIRUDDHA_TYPES_SOURCE !== 'undefined') cites.add(VIRUDDHA_TYPES_SOURCE);
+h += '<ul class="small">' + Array.from(cites).sort().map((r) => `<li>${esc(r)}</li>`).join('') + '</ul>';
+h += '</details>';
+
+// 4. Modern research & health sources
+h += `<details class="details"${openAttr()}><summary>Modern research &amp; health sources</summary>`;
+const seenUrls = new Set();
+h += '<ul class="small">';
+function _modernRef(src) {
+if (!src) return;
+const idx = src.indexOf(' — http');
+if (idx === -1) {
+h += `<li>${esc(src)}</li>`;
+return;
+}
+const name = src.slice(0, idx);
+const url = src.slice(idx + 3);
+if (seenUrls.has(url)) return;
+seenUrls.add(url);
+h += `<li>${esc(name)} — <a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></li>`;
+}
+if (typeof GUT !== 'undefined') {
+(GUT.modern || []).forEach((m) => _modernRef(m.source));
+if (GUT.order && GUT.order.modern) _modernRef(GUT.order.modern.source);
+}
+if (typeof MYTHS !== 'undefined') MYTHS.forEach((m) => _modernRef(m.source));
+if (typeof CHEWING !== 'undefined' && CHEWING.modern) CHEWING.modern.forEach((m) => _modernRef(m.source));
+h += '</ul>';
+h += '</details>';
+
+// 5. Wisdom from Japan
+h += `<details class="details"${openAttr()}><summary>Wisdom from Japan</summary>`;
+if (typeof JAPAN !== 'undefined' && JAPAN.sources) {
+h += '<ul class="small">' + JAPAN.sources.map((s) =>
+`<li>${esc(s.title)}${s.link ? ` — <a href="${esc(s.link)}" target="_blank" rel="noopener">${esc(s.link)}</a>` : ''}</li>`
+).join('') + '</ul>';
+}
+h += '</details>';
+
+h += `<p class="small muted">Verse numbers follow the editions linked above and may differ by a verse in other editions.</p>`;
+return h;
+}
+
+function openReferences() {
+openOverlay(`<div class="card stack">` +
+'<h2 class="card-title">All references</h2>' +
+referencesHtml() +
+'<button class="btn primary" data-ref-close>Close</button></div>');
+const panel = document.querySelector('.overlay-panel');
+if (panel) {
+panel.onclick = (e) => {
+if (e.target.closest('[data-ref-close]')) closeOverlay();
+};
+}
+}
+
 // ---------- dosha introduction (from data-learn.js) ----------
 
 function doshaIntroHtml() {
@@ -618,6 +725,9 @@ function renderLearn(el) {
 const L = typeLetters();
 let html = '';
 
+// All references (top)
+html += '<div class="btn-row"><button class="btn ghost" data-open-refs>📚 All references</button></div>';
+
 // Dosha introduction
 html += '<div class="stack">';
 html += '<div class="card stack stagger">' + doshaIntroHtml() + '</div>';
@@ -834,10 +944,17 @@ html += '<div class="kolam">' + _art('kolam') + '</div>';
 html += '<div class="card stack"><h2 class="card-title">Disclaimer</h2><p class="small">' + esc(DISCLAIMER) + '</p></div>';
 html += '</div>';
 
+// All references (bottom)
+html += '<div class="btn-row"><button class="btn ghost" data-open-refs>📚 All references</button></div>';
+
 el.innerHTML = html;
 
 const qb = el.querySelector('[data-learnquiz]');
 if (qb) qb.addEventListener('click', () => startQuiz(() => render('learn')));
+
+el.addEventListener('click', (e) => {
+if (e.target.closest('[data-open-refs]')) openReferences();
+});
 }
 
 // ---------- Me ----------
