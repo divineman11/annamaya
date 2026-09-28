@@ -48,7 +48,7 @@ function findDish(query) {
   DISHES.forEach((d) => [d.n.toLowerCase(), ...d.a].forEach((al) => {
     let s = 0;
     if (q.includes(' ' + al + ' ')) s = al.length + 100;
-    else if (q.trim().length >= 3 && al.startsWith(q.trim())) s = q.trim().length;
+    else if (q.trim().length >= 5 && al.startsWith(q.trim())) s = q.trim().length;
     if (s > score) { score = s; best = d; }
   }));
   return best;
@@ -104,8 +104,16 @@ function dishAdviceHtml(query, mealKey) {
   const r = dish ? [0, 1, 2].map((i) => Math.min(...allDishes.map((d) => d.r[i]))) : online ? [...online.r] : hint ? [...hint.r] : null;
   // A known dish that names an ingredient to avoid for a dosha (e.g. "horse gram soup") is Avoid for that dosha.
   if (dish && r && typedFoods) [0, 1, 2].forEach((i) => { if (typedFoods.foods.some((f) => f['VPK'[i]] <= -2)) r[i] = -2; });
+  // Words beyond the matched dish names can make it worse (e.g. "iced tea", "extra spicy dosa").
+  let extraHint = null;
+  if (dish && r) {
+    let rest = ' ' + raw.toLowerCase().replace(/[^a-z0-9&]+/g, ' ').trim() + ' ';
+    allDishes.forEach((d) => [d.n.toLowerCase(), ...d.a].forEach((al) => { rest = rest.split(' ' + al + ' ').join(' '); }));
+    extraHint = rest.trim() ? hintRatings(rest) : null;
+    if (extraHint) [0, 1, 2].forEach((i) => { r[i] = Math.min(r[i], extraHint.r[i]); });
+  }
   // Foods that don't go together override everything: Avoid for every dosha.
-  const combo = findCombo(raw + ' ' + (online && lk.page ? lk.page.extract : ''));
+  const combo = findCombo(raw); // typed words only: article text is too loose
   if (combo && r) r.splice(0, 3, -2, -2, -2);
   const rr = combo && !r ? [-2, -2, -2] : r;
   const title = dish ? dish.n : raw;
@@ -129,7 +137,7 @@ function dishAdviceHtml(query, mealKey) {
   const worst = rr ? Math.min(...L.map((k) => rr[idx[k]])) : 0;
 
   // Restaurant note: dish-specific requests first, then short per-dosha add-ons (no repeats).
-  const asks = dish ? [...new Set(allDishes.map((d) => d.ask))] : online ? online.noteBits : hint ? hint.notes : [];
+  const asks = dish ? [...new Set([...allDishes.map((d) => d.ask), ...(extraHint ? extraHint.notes : [])])] : online ? online.noteBits : hint ? hint.notes : [];
   let note;
   if (asks.length) {
     const a = asks.join(' ').toLowerCase();
@@ -171,11 +179,12 @@ function dishAdviceHtml(query, mealKey) {
     if (reasons.length) about += `<ul class="small">${reasons.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>`;
   }
 
-  return `<div class="dish-advice stack" aria-live="polite">
+  return `<div class="dish-advice stack">
     <div class="order-item"><p class="card-title dish-name">${esc(titleCase(title))}</p>${orderLinksHtml(searchQ)}</div>
     ${rr ? `<ul class="verdicts">${verdicts}</ul>` : ''}
     ${combo ? `<p class="banner warn small"><strong>Foods that don't go together:</strong> ${esc(combo.pair)}. ${esc(combo.concern)} <span class="muted">(${esc(combo.source)})</span></p>` : ''}
     ${allDishes.some((d) => d.why) ? `<ul class="small">${[...new Set(allDishes.filter((d) => d.why).map((d) => d.why))].map((w) => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}
+    ${extraHint ? `<ul class="small">${extraHint.why.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}
     ${typedFoods && typedFoods.foods.some((f) => L.some((k) => f[k] < 0)) ? `<ul class="small">${typedFoods.foods.filter((f) => L.some((k) => f[k] < 0)).map((f) => `<li><strong>${esc(f.name.replace(/\(.*?\)/g, '').trim())}:</strong> ${esc(f.why)}</li>`).join('')}</ul>` : ''}
     ${about}
     ${warn.map((w) => `<p class="banner warn small">${esc(w)}</p>`).join('')}
@@ -211,7 +220,7 @@ function eatOutHtml(nowMeal) {
         <datalist id="dishList">${dishNames.map((n) => `<option value="${esc(n)}"></option>`).join('')}</datalist>
         <p class="small muted">We'll tell you if it suits your dosha, how to order it, and a better choice if needed.</p>
       </form>
-      <div id="dishAdvice">${dishAdviceHtml(eatOutState.q, mealKey)}</div>
+      <div id="dishAdvice" aria-live="polite">${dishAdviceHtml(eatOutState.q, mealKey)}</div>
       <div class="chips" role="group" aria-label="Meal">${OUT_MEALS.map(([k, l]) => `<button type="button" class="chip${k === mealKey ? ' on' : ''}" data-out-meal="${k}" aria-pressed="${k === mealKey}">${l}</button>`).join('')}</div>
       <div id="outList" class="stack" data-meal="${mealKey}">${outListHtml(mealKey)}</div>
       <div class="order-note">

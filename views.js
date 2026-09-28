@@ -28,6 +28,13 @@ if (v <= -2) return `<span class="mark avoid"><b>${dosha}</b> ✗✗ Avoid</span
 return `<span class="mark red"><b>${dosha}</b> ✗ Reduce</span>`;
 }
 
+// One click handler per tab on the shared #view: replaces the previous tab's handler so they never stack.
+function setTabClick(el, handler) {
+if (el._tabClick) el.removeEventListener('click', el._tabClick);
+el._tabClick = handler;
+el.addEventListener('click', handler);
+}
+
 function _settingsChips(list, current, onPick) {
 return list.map((x) => `<button class="chip${x.v === current ? ' on' : ''}" aria-pressed="${x.v === current ? 'true' : 'false'}" data-set="${x.v}">${esc(x.t)}</button>`).join('');
 }
@@ -614,7 +621,7 @@ return foodScore(f) < 0;
 
 function visible(f) {
 if (!matchesDiet(f)) return false;
-if (!matchesView(f)) return false;
+if (!state.q && !matchesView(f)) return false;
 if (state.cat !== 'All' && f.cat !== state.cat) return false;
 if (state.q) {
 const n = _norm(state.q);
@@ -668,7 +675,7 @@ function drawList() {
 const box = el.querySelector('[data-list]');
 const list = FOODS.filter(visible);
 let label = `${list.length} food${list.length === 1 ? '' : 's'}`;
-if (settings.type && typeLetters().length) {
+if (!state.q && settings.type && typeLetters().length) {
 if (foodView === 'eat') label = `${list.length} food${list.length === 1 ? '' : 's'} to eat more of`;
 else if (foodView === 'avoid') label = `${list.length} food${list.length === 1 ? '' : 's'} to avoid or reduce`;
 }
@@ -703,7 +710,7 @@ const f = e.target.closest('[data-food]');
 if (f) { e.preventDefault(); toggleFood(f); }
 });
 
-el.addEventListener('click', (e) => {
+setTabClick(el, (e) => {
 const fd = e.target.closest('[data-fdiet]');
 if (fd) {
 const value = fd.dataset.fdiet;
@@ -723,7 +730,7 @@ const input = el.querySelector('.search');
 let deb = null;
 input.addEventListener('input', () => {
 clearTimeout(deb);
-deb = setTimeout(() => { state.q = input.value; drawList(); }, 120);
+deb = setTimeout(() => { if (!input.isConnected) return; state.q = input.value; drawList(); }, 120);
 });
 
 drawDietChips();
@@ -1018,7 +1025,7 @@ el.innerHTML = html;
 const qb = el.querySelector('[data-learnquiz]');
 if (qb) qb.addEventListener('click', () => startQuiz(() => render('learn')));
 
-el.addEventListener('click', (e) => {
+setTabClick(el, (e) => {
 if (e.target.closest('[data-open-refs]')) openReferences();
 });
 }
@@ -1026,6 +1033,7 @@ if (e.target.closest('[data-open-refs]')) openReferences();
 // ---------- Me ----------
 
 function renderMe(el) {
+setTabClick(el, () => {});
 const L = typeLetters();
 let html = '<div class="stack stagger">';
 
@@ -1168,6 +1176,7 @@ const card = document.getElementById('backupCard');
 const pending = card && card._pendingBackup;
 if (pending) {
 try {
+Object.keys(localStorage).filter((k) => k.indexOf('pd.') === 0).forEach((k) => localStorage.removeItem(k));
 Object.keys(pending).forEach((k) => store.set(k, pending[k]));
 location.reload();
 } catch (err) { toast('Could not restore that file.'); }

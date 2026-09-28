@@ -579,6 +579,8 @@ function render(tab) {
   const y = window.scrollY;
   currentTab = tab;
   const el = $('#view');
+  // Drop the previous tab's click handler (see setTabClick in views.js) before drawing the next tab.
+  if (el._tabClick) { el.removeEventListener('click', el._tabClick); el._tabClick = null; }
   (RENDERERS[tab] || renderToday)(el);
   document.querySelectorAll('.tabs button').forEach((b) => {
     if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page');
@@ -629,6 +631,8 @@ view.addEventListener('click', (e) => {
   const cp = e.target.closest('[data-copy-note]');
   if (cp) { const t = $('#' + (cp.dataset.copyNote || 'orderNote')); if (t) copyText(t.textContent); return; }
   if (e.target.closest('[data-dish-lookup]')) {
+    const box = $('#dishQ');
+    if (box) eatOutState.q = box.value.trim().slice(0, 60);
     const q = eatOutState.q;
     eatOutState.loading = q.toLowerCase();
     const prev = lookupCache.get(eatOutState.loading);

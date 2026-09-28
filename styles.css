@@ -656,7 +656,7 @@ input[type="checkbox"], input[type="radio"] { width: 1.15rem; height: 1.15rem; a
 .brand-line { display:flex; align-items:baseline; gap:0.4rem; flex-wrap:wrap; } .brand-meaning { font-size:0.85rem; color: var(--muted); font-style: italic; font-family: 'Nunito Sans', system-ui, sans-serif; } .name-meaning { text-align:center; font-style: italic; color: var(--muted); font-size: 0.95rem; margin-top: -0.25rem; }
 
 .visually-hidden { position:absolute !important; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
-.type-pick select { min-height:44px; padding: 0.35rem 2rem 0.35rem 0.85rem; border-radius:999px; border:1.5px solid var(--line); background: var(--card); color: var(--ink); font: 700 0.9rem 'Nunito Sans', system-ui, sans-serif; cursor:pointer; max-width: 11rem; }
+.type-pick select { min-height:48px; padding: 0.35rem 2rem 0.35rem 0.85rem; border-radius:999px; border:1.5px solid var(--line); background: var(--card); color: var(--ink); font: 700 0.9rem 'Nunito Sans', system-ui, sans-serif; cursor:pointer; max-width: 11rem; }
 .type-pick select[data-type*="V"] { border-color: var(--vata); } .type-pick select[data-type="P"], .type-pick select[data-type="PK"] { border-color: var(--pitta); } .type-pick select[data-type="K"] { border-color: var(--kapha); }
 .type-pick select:focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
 .top { gap: 0.5rem; }
@@ -718,7 +718,10 @@ input[type="checkbox"], input[type="radio"] { width: 1.15rem; height: 1.15rem; a
 /* Six tabs: tighten labels on small phones */
 /* Six tabs: size each tab to its label (min 48px tap target) and tighten labels on small phones */
 .tabs button { flex: 1 1 auto; min-width: 48px; }
-@media (max-width: 400px) { .tabs button { font-size: 0.72rem; padding-left: 0; padding-right: 0; } }
+/* Bottom-bar labels keep a fixed readable size: the text-size setting enlarges content, not the nav,
+   so six labels always fit on small phones. */
+.tabs button { font-size: clamp(14.5px, 0.85rem, 15.5px); }
+@media (max-width: 400px) { .tabs button { font-size: 14.5px; padding-left: 0; padding-right: 0; } }
 
 /* ---------- Dish advice ---------- */
 .dish-advice { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: var(--space-3) var(--space-2); background: var(--card); }
@@ -728,7 +731,7 @@ input[type="checkbox"], input[type="radio"] { width: 1.15rem; height: 1.15rem; a
 .verdict.vgood { border-left-color: var(--neem); }
 .verdict.vok { border-left-color: var(--turmeric); }
 .verdict.vbad { border-left-color: var(--clay); }
-.verdict.vavoid { border-left: 6px solid var(--clay); font-weight: 700; color: var(--clay); }
+.verdict.vavoid { border-left: 6px solid var(--clay); font-weight: 700; color: var(--ink); }
 .swap { border-top: 1px dashed var(--line); padding-top: var(--space-2); }
 .lookup-result { border-left: 4px solid var(--indigo); background: var(--paper); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); }
 .lookup-result p { margin: 0 0 var(--space-2); }
