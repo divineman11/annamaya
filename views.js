@@ -405,6 +405,7 @@ el.innerHTML = `
 <div class="card stack">
 <input class="search" type="search" placeholder="Search 160+ foods — try 'ragi' or 'fish'"
 aria-label="Search foods" autocomplete="off">
+<div data-dietchips></div>
 <div data-viewchips></div>
 <div class="chips" data-cats></div>
 <p class="small muted" data-count></p>
@@ -413,15 +414,17 @@ aria-label="Search foods" autocomplete="off">
 <div data-notype></div>
 </div>`;
 
-const state = { q: '', cat: 'All', showAll: false };
+const state = { q: '', cat: 'All' };
+
+function matchesDiet(f) {
+if (settings.diet === 'veg') return f.type === 'veg';
+if (settings.diet === 'egg') return f.type === 'veg' || f.type === 'egg';
+return true;
+}
 
 function visibleCats() {
 const set = new Set(['All']);
-FOODS.forEach((f) => {
-if (settings.diet === 'veg' && /Meat|Fish|Eggs/.test(f.cat)) return;
-if (settings.diet === 'egg' && /Meat|Fish/.test(f.cat)) return;
-set.add(f.cat);
-});
+FOODS.filter(matchesDiet).forEach((f) => set.add(f.cat));
 return Array.from(set);
 }
 
@@ -437,17 +440,26 @@ return foodScore(f) < 0;
 }
 
 function visible(f) {
+if (!matchesDiet(f)) return false;
 if (!matchesView(f)) return false;
 if (state.cat !== 'All' && f.cat !== state.cat) return false;
-if (!state.showAll) {
-if (settings.diet === 'veg' && /Meat|Fish|Eggs/.test(f.cat)) return false;
-if (settings.diet === 'egg' && /Meat|Fish/.test(f.cat)) return false;
-}
 if (state.q) {
 const n = _norm(state.q);
 if (!(_norm(f.name).includes(n) || (f.aka || []).some((a) => _norm(a).includes(n)))) return false;
 }
 return true;
+}
+
+function drawDietChips() {
+const box = el.querySelector('[data-dietchips]');
+const diets = [
+{ v: 'veg', t: 'Veg' },
+{ v: 'egg', t: 'Egg' },
+{ v: 'nonveg', t: 'Non-veg' }
+];
+box.innerHTML = `<p class="small muted">I eat:</p><div class="chips">` +
+diets.map((x) => `<button class="chip${settings.diet === x.v ? ' on' : ''}" aria-pressed="${settings.diet === x.v ? 'true' : 'false'}" data-fdiet="${x.v}">${esc(x.t)}</button>`).join('') +
+'</div>';
 }
 
 function drawViewChips() {
@@ -475,9 +487,8 @@ box.innerHTML = `<p class="small muted">For ${esc(TYPES[settings.type].name)}:</
 function drawChips() {
 const cats = visibleCats();
 const box = el.querySelector('[data-cats]');
-box.innerHTML =
-cats.map((c) => `<button class="chip${state.cat === c ? ' on' : ''}" aria-pressed="${state.cat === c ? 'true' : 'false'}" data-cat="${esc(c)}">${esc(c)}</button>`).join('') +
-`<button class="chip${state.showAll ? ' on' : ''}" aria-pressed="${state.showAll ? 'true' : 'false'}" data-showall>Show all foods</button>`;
+if (state.cat !== 'All' && !cats.includes(state.cat)) state.cat = 'All';
+box.innerHTML = cats.map((c) => `<button class="chip${state.cat === c ? ' on' : ''}" aria-pressed="${state.cat === c ? 'true' : 'false'}" data-cat="${esc(c)}">${esc(c)}</button>`).join('');
 }
 
 function drawList() {
@@ -520,12 +531,18 @@ if (f) { e.preventDefault(); toggleFood(f); }
 });
 
 el.addEventListener('click', (e) => {
+const fd = e.target.closest('[data-fdiet]');
+if (fd) {
+const value = fd.dataset.fdiet;
+settings.diet = value; save();
+toast(value === 'veg' ? 'Showing vegetarian foods and meals' : value === 'egg' ? 'Showing veg + egg foods and meals' : 'Showing all foods and meals');
+render('foods');
+return;
+}
 const fv = e.target.closest('[data-fview]');
 if (fv) { foodView = fv.dataset.fview; drawViewChips(); drawChips(); drawList(); return; }
 const c = e.target.closest('[data-cat]');
 if (c) { state.cat = c.dataset.cat; drawChips(); drawList(); return; }
-const s = e.target.closest('[data-showall]');
-if (s) { state.showAll = !state.showAll; drawChips(); drawList(); return; }
 if (e.target.closest('[data-quizcta]')) { startQuiz(() => render('foods')); return; }
 });
 
@@ -536,6 +553,7 @@ clearTimeout(deb);
 deb = setTimeout(() => { state.q = input.value; drawList(); }, 120);
 });
 
+drawDietChips();
 drawViewChips();
 drawChips();
 drawList();
