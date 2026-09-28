@@ -1015,6 +1015,7 @@ toast(msg);
 function _validBackupData(data) {
 const isPlainObject = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
 const isDateString = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s));
+const isTimeString = (v) => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 if (!isPlainObject(data)) return false;
 const keys = Object.keys(data);
 if (keys.length === 0) return false;
@@ -1023,6 +1024,30 @@ if ('pd.settings' in data && !isPlainObject(data['pd.settings'])) return false;
 if ('pd.days' in data && !isPlainObject(data['pd.days'])) return false;
 if ('pd.defaults' in data && !isPlainObject(data['pd.defaults'])) return false;
 if ('pd.bought' in data && !isPlainObject(data['pd.bought'])) return false;
+if ('pd.settings' in data) {
+const st = data['pd.settings'];
+if ('gymTime' in st && !isTimeString(st.gymTime)) return false;
+if ('times' in st) {
+if (!isPlainObject(st.times)) return false;
+if (!Object.values(st.times).every((t) => isTimeString(t))) return false;
+}
+}
+if ('pd.days' in data) {
+if (!Object.values(data['pd.days']).every((d) =>
+isPlainObject(d) &&
+(!('status' in d) || isPlainObject(d.status)) &&
+(!('pick' in d) || isPlainObject(d.pick)) &&
+(!('cheats' in d) || isPlainObject(d.cheats)) &&
+(!('shift' in d) || (typeof d.shift === 'number' && Number.isFinite(d.shift))) &&
+(!('gym' in d) || typeof d.gym === 'boolean')
+)) return false;
+}
+if ('pd.defaults' in data) {
+if (!Object.values(data['pd.defaults']).every((v) => typeof v === 'string')) return false;
+}
+if ('pd.bought' in data) {
+if (!Object.values(data['pd.bought']).every((v) => typeof v === 'boolean')) return false;
+}
 if ('pd.weights' in data) {
 if (!Array.isArray(data['pd.weights'])) return false;
 if (!data['pd.weights'].every((w) =>

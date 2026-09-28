@@ -81,20 +81,22 @@ function streak() {
 
 // ---------- Migration (Amendment 8) ----------
 (function migrate() {
+  const plainObject = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
+  const validTime = (v) => typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
   // A1/A6: normalise shapes BEFORE any access to days/defaults/weights/bought.
-  if (!days || typeof days !== 'object' || Array.isArray(days)) days = {};
-  if (!defaults || typeof defaults !== 'object' || Array.isArray(defaults)) defaults = {};
-  if (!bought || typeof bought !== 'object' || Array.isArray(bought)) bought = {};
+  if (!plainObject(days)) days = {};
+  if (!plainObject(defaults)) defaults = {};
+  if (!plainObject(bought)) bought = {};
   if (!Array.isArray(weights)) weights = [];
   weights = weights.filter((w) => w && typeof w === 'object' && /^\d{4}-\d{2}-\d{2}$/.test(w.date) && Number.isFinite(w.kg) && w.kg > 20 && w.kg < 400);
-  if (!settings || typeof settings !== 'object') settings = {};
+  if (!plainObject(settings)) settings = {};
   const q = settings.quizPct;
   const okQ = q && typeof q === 'object' && !Array.isArray(q) &&
-    ['V', 'P', 'K'].every((t) => Number.isFinite(q[t]) && q[T] >= 0 && q[t] <= 100);
+    ['V', 'P', 'K'].every((t) => Number.isFinite(q[t]) && q[t] >= 0 && q[t] <= 100);
   settings.quizPct = okQ ? q : null;
-  if (!/^\d{2}:\d{2}$/.test(settings.gymTime || '')) settings.gymTime = '17:00';
-  if (!settings.times || typeof settings.times !== 'object') settings.times = {};
-  Object.keys(settings.times).forEach((k) => { if (!/^\d{2}:\d{2}$/.test(settings.times[k])) delete settings.times[k]; });
+  if (!validTime(settings.gymTime)) settings.gymTime = '17:00';
+  if (!plainObject(settings.times)) settings.times = {};
+  Object.keys(settings.times).forEach((k) => { if (!validTime(settings.times[k])) delete settings.times[k]; });
 
   const swap = (obj) => { if (obj && obj.pick && obj.pick.wake === 'Banana + warm milk') obj.pick.wake = 'Dates + warm milk'; };
   // defaults and every day's pick
@@ -107,19 +109,29 @@ function streak() {
     settings.onboarded = true;
   }
   // Hardening: ensure shapes are valid before use
-  if (!days || typeof days !== 'object' || Array.isArray(days)) days = {};
-  if (!Array.isArray(weights)) weights = [];
-  weights = weights.filter((w) => w && w.date === 'string' && typeof w.kg === 'number');
+  if (!plainObject(days)) days = {};
   Object.keys(days).forEach((k) => {
-    days[k] = Object.assign(blankDay(), days[k]);
-    days[k].status = days[k].status || {};
-    days[k].pick = days[k].pick || {};
-    days[k].cheats = days[k].cheats || {};
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) { delete days[k]; return; }
+    const raw = plainObject(days[k]) ? days[k] : {};
+    const day = Object.assign(blankDay(), raw);
+    day.status = plainObject(day.status) ? day.status : {};
+    Object.keys(day.status).forEach((s) => {
+      if (!['done', 'skip', 'cheat'].includes(day.status[s])) delete day.status[s];
+    });
+    day.pick = plainObject(day.pick) ? day.pick : {};
+    Object.keys(day.pick).forEach((s) => { if (typeof day.pick[s] !== 'string') delete day.pick[s]; });
+    day.cheats = plainObject(day.cheats) ? day.cheats : {};
+    Object.keys(day.cheats).forEach((s) => { if (typeof day.cheats[s] !== 'string') delete day.cheats[s]; });
+    day.gym = typeof day.gym === 'boolean' ? day.gym : false;
+    day.shift = (Number.isFinite(day.shift) && day.shift >= -120 && day.shift <= 240) ? day.shift : 0;
+    days[k] = day;
   });
+  Object.keys(defaults).forEach((id) => { if (typeof defaults[id] !== 'string') delete defaults[id]; });
+  Object.keys(bought).forEach((id) => { if (typeof bought[id] !== 'boolean') delete bought[id]; });
   if (!(settings.diet in RANK)) settings.diet = 'nonveg';
   if (!GOALS[settings.goal]) settings.goal = 'maintain';
   if (settings.type && !TYPES[settings.type]) settings.type = null;
-  if (!settings.times || typeof settings.times !== 'object') settings.times = {};
+  if (!plainObject(settings.times)) settings.times = {};
 })();
 
 // ---------- Overlay / toast ----------
@@ -313,7 +325,7 @@ function renderToday(el) {
       ${opts.length > 1
         ? `<select data-pick="${s.id}" aria-label="${esc(s.label)} choice">${opts.map((o) => `<option value="${esc(o.name)}"${o.name === opt.name ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}</select>`
         : `<div>${esc(opt.name)}</div>`}
-      ${opt && opt.note ? `<p class="small muted">${esc(opt.note)}</p>` : ''}
+      ${opt && opt.note ? `<p class="small muted">${opt.note}</p>` : ''}
       ${notes.length ? `<p class="small muted">${notes.join(' ')}</p>` : ''}
       <div class="slot-actions btn-row">
         <button class="btn${st === 'done' ? ' primary' : ''}" data-mark="done" data-slot="${s.id}">Eaten</button>
@@ -649,12 +661,12 @@ if (!settings.disclaimerAccepted || !settings.onboarded) {
 // and the user isn't typing in a textarea/input or using a select.
 setInterval(() => {
   if (document.hidden) return;
+  if (followToday && viewKey !== todayKey()) viewKey = todayKey();
   if (currentTab !== 'today' || viewKey !== todayKey()) return;
   if (!$('#overlay').hidden) return;
   const a = document.activeElement;
   if (a && (a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || (a.tagName === 'INPUT' && a.type !== 'checkbox' && a.type !== 'radio'))) return;
   if (cheatOpen) return;
-  if (followToday && viewKey !== todayKey()) viewKey = todayKey();
   const y = window.scrollY;
   renderToday($('#view'));
   requestAnimationFrame(() => window.scrollTo(0, y));
