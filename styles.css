@@ -728,3 +728,6 @@ input[type="checkbox"], input[type="radio"] { width: 1.15rem; height: 1.15rem; a
 .verdict.vok { border-left-color: var(--turmeric); }
 .verdict.vbad { border-left-color: var(--clay); }
 .swap { border-top: 1px dashed var(--line); padding-top: var(--space-2); }
+.lookup-result { border-left: 4px solid var(--indigo); background: var(--paper); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); }
+.lookup-result p { margin: 0 0 var(--space-2); }
+.lookup-result p:last-child { margin-bottom: 0; }

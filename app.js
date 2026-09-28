@@ -623,6 +623,16 @@ view.addEventListener('click', (e) => {
   }
   const cp = e.target.closest('[data-copy-note]');
   if (cp) { const t = $('#' + (cp.dataset.copyNote || 'orderNote')); if (t) copyText(t.textContent); return; }
+  if (e.target.closest('[data-dish-lookup]')) {
+    const q = eatOutState.q;
+    eatOutState.loading = q.toLowerCase();
+    const prev = lookupCache.get(eatOutState.loading);
+    if (prev && prev.status === 'error') lookupCache.delete(eatOutState.loading);
+    const redraw = () => { const box = $('#dishAdvice'); if (box && eatOutState.q === q) box.innerHTML = dishAdviceHtml(q, eatOutState.meal || currentMealKey()); };
+    redraw();
+    lookupDish(q).then(() => { eatOutState.loading = null; redraw(); });
+    return;
+  }
   const om = e.target.closest('[data-out-meal]');
   if (om) {
     eatOutState.meal = om.dataset.outMeal;

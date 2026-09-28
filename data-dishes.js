@@ -91,14 +91,15 @@ const DISHES = [
   { n: 'Soft drinks', a: ['coke', 'pepsi', 'soft drink', 'cold drink', 'soda', 'sprite', 'thums up'], t: 'veg', r: [-1, -1, -1], ask: 'Skip it if you can.', swap: 'Tender coconut water or buttermilk', swapQ: 'Tender coconut' },
 ];
 
-// Keyword hints for dishes not in the list above. Each adds a traditional reason.
+// Keyword hints for dishes not in the list above. Each adds a traditional reason,
+// and optionally a request for the restaurant note.
 const DISH_HINTS = [
-  { re: /fri(ed|es)|fry|crispy|65|pakod|bajji|tempura|nugget|chips/i, r: [0, -1, -1], why: 'Deep-fried food is heavy and oily.' },
-  { re: /chill?i|spicy|schezwan|szechuan|andhra|kolhapuri|chettinad|peri peri|mirchi|\bhot\b/i, r: [0, -1, 0], why: 'Very spicy food is traditionally said to heat Pitta.' },
-  { re: /cheese|cream|butter|makhani|malai|mayo|alfredo/i, r: [0, 0, -1], why: 'Cheese, cream and butter are heavy for Kapha.' },
-  { re: /\bice\b|\bcold\b|frozen|chilled|shake|kulfi/i, r: [-1, 0, -1], why: 'Cold food and drinks are traditionally said to weaken digestion (agni).' },
+  { re: /fri(ed|es)|fry|crispy|65|pakod|bajji|tempura|nugget|chips/i, r: [0, -1, -1], why: 'Deep-fried food is heavy and oily.', note: 'Less oil, please.' },
+  { re: /chill?i|spicy|schezwan|szechuan|andhra|kolhapuri|chettinad|peri peri|mirchi|\bhot\b/i, r: [0, -1, 0], why: 'Very spicy food is traditionally said to heat Pitta.', note: 'Mild spice, no extra chilli.' },
+  { re: /cheese|cream|butter|makhani|malai|mayo|alfredo/i, r: [0, 0, -1], why: 'Cheese, cream and butter are heavy for Kapha.', note: 'Less cheese and cream.' },
+  { re: /\bice\b|\bcold\b|frozen|chilled|shake|kulfi/i, r: [-1, 0, -1], why: 'Cold food and drinks are traditionally said to weaken digestion (agni).', note: 'Not chilled, no ice.' },
   { re: /sweet|sugar|dessert|cake|choc|jamun|halwa|mithai/i, r: [0, 0, -1], why: 'Sweets are heavy for Kapha. Keep portions small.' },
   { re: /salad|\braw\b|sprout/i, r: [-1, 0, 0], why: 'Raw, cold food can be hard for Vata. Lightly cooked is gentler.' },
-  { re: /sour|tamarind|pickle|vinegar|achar/i, r: [0, -1, 0], why: 'Sour and pickled food is traditionally said to heat Pitta.' },
+  { re: /sour|tamarind|pickle|vinegar|achar/i, r: [0, -1, 0], why: 'Sour and pickled food is traditionally said to heat Pitta.', note: 'Less sour, no pickle on the side.' },
   { re: /soup|khichdi|idli|steamed|\bdal\b|rasam/i, r: [1, 1, 1], why: 'Warm, simple, cooked food is easy to digest.' },
 ];

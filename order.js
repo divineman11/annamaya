@@ -8,7 +8,7 @@ const VERDICT = { 1: 'Good choice', 0: 'Okay in moderation', '-1': 'Better to li
 const NOTE_ADDON = { V: 'Serve it hot and fresh.', P: 'No extra chilli.', K: 'Less oil, please.' };
 
 // Survives Today's re-renders (every minute, and on returning from the ordering app).
-const eatOutState = { open: false, meal: null, q: '' };
+const eatOutState = { open: false, meal: null, q: '', loading: null };
 
 const orderLetters = () => (typeLetters().length ? typeLetters() : ['V', 'P', 'K']);
 
@@ -62,7 +62,7 @@ function hintRatings(query) {
     const v = hits.map((h) => h.r[i]);
     return v.includes(-1) ? -1 : v.includes(1) ? 1 : 0;
   });
-  return { r, why: hits.map((h) => h.why) };
+  return { r, why: hits.map((h) => h.why), notes: hits.map((h) => h.note).filter(Boolean) };
 }
 
 function dishAdviceHtml(query, mealKey) {
@@ -72,16 +72,23 @@ function dishAdviceHtml(query, mealKey) {
   const idx = { V: 0, P: 1, K: 2 };
   const dish = findDish(raw);
   const hint = dish ? null : hintRatings(raw);
-  const r = dish ? dish.r : hint ? hint.r : null;
+  // Online lookup result (only exists after the user tapped "Look it up online").
+  const lk = dish ? null : lookupCache.get(raw.toLowerCase());
+  const online = lk && lk.status === 'ok' ? lk.analysis : null;
+  const r = dish ? dish.r : online ? online.r : hint ? hint.r : null;
   const title = dish ? dish.n : raw;
   const searchQ = dish ? (dish.a.find((a) => (' ' + raw.toLowerCase() + ' ').includes(' ' + a + ' ')) || dish.n) : raw;
   const titleCase = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+  const isNonveg = (dish && dish.t === 'nonveg') || (online && online.nonveg) || /chicken|mutton|fish|prawn|meat|keema/i.test(raw);
+  const isEgg = (dish && dish.t === 'egg') || (online && online.egg && !online.nonveg);
+  const isCurd = (dish && dish.curd) || (online && online.curd) || /curd|raita|lassi|dahi|buttermilk|chaas/i.test(raw);
   const warn = [];
-  if (dish && dish.t === 'nonveg' && settings.diet === 'veg') warn.push('This is a non-veg dish, and your setting is vegetarian.');
-  if (dish && dish.t === 'nonveg' && settings.diet === 'egg') warn.push('This is a non-veg dish, and your setting is veg + egg.');
-  if (mealKey === 'dinner' && ((dish && dish.t === 'nonveg') || /chicken|mutton|fish|prawn|meat|keema/i.test(raw))) warn.push('Traditionally, non-veg is kept for lunch rather than dinner.');
-  if (mealKey === 'dinner' && ((dish && dish.curd) || /curd|raita|lassi|dahi|buttermilk|chaas/i.test(raw))) warn.push('Curd is traditionally avoided at night.');
+  if (isNonveg && settings.diet === 'veg') warn.push('This looks like a non-veg dish, and your setting is vegetarian.');
+  else if (isNonveg && settings.diet === 'egg') warn.push('This looks like a non-veg dish, and your setting is veg + egg.');
+  else if (isEgg && settings.diet === 'veg') warn.push('This dish may contain egg, and your setting is vegetarian.');
+  if (mealKey === 'dinner' && isNonveg) warn.push('Traditionally, non-veg is kept for lunch rather than dinner.');
+  if (mealKey === 'dinner' && isCurd) warn.push('Curd is traditionally avoided at night.');
 
   const verdicts = r ? L.map((k) => {
     const v = r[idx[k]];
@@ -89,13 +96,14 @@ function dishAdviceHtml(query, mealKey) {
   }).join('') : '';
   const worst = r ? Math.min(...L.map((k) => r[idx[k]])) : 0;
 
+  // Restaurant note: dish-specific requests first, then short per-dosha add-ons (no repeats).
+  const asks = dish ? [dish.ask] : online ? online.noteBits : hint ? hint.notes : [];
   let note;
-  if (dish) {
-    const extra = L.map((k) => NOTE_ADDON[k]).filter((x) => {
-      const a = dish.ask.toLowerCase();
-      return !(x.includes('chilli') && a.includes('chilli')) && !(x.includes('oil') && a.includes('oil')) && !(x.includes('hot') && a.includes('hot'));
-    });
-    note = [dish.ask, ...new Set(extra)].join(' ');
+  if (asks.length) {
+    const a = asks.join(' ').toLowerCase();
+    const extra = L.map((k) => NOTE_ADDON[k]).filter((x) =>
+      !(x.includes('chilli') && a.includes('chilli')) && !(x.includes('oil') && a.includes('oil')) && !(x.includes('hot') && a.includes('hot')));
+    note = [...new Set([...asks, ...extra])].join(' ');
   } else {
     note = ORDER_NOTES[settings.type] || ORDER_NOTES.VPK;
   }
@@ -105,10 +113,35 @@ function dishAdviceHtml(query, mealKey) {
         <div class="order-item"><span>${esc(dish.swap)}</span>${orderLinksHtml(dish.swapQ)}</div></div>`
     : '';
 
+  // What we know about an unlisted dish, and the online lookup button / result.
+  let about = '';
+  if (!dish) {
+    const reasons = online ? online.reasons : hint ? hint.why : [];
+    if (online) {
+      const excerpt = lk.page.extract.split(/(?<=\.)\s+/).slice(0, 2).join(' ').slice(0, 320);
+      about = `<div class="lookup-result">
+        <p class="small"><strong>From Wikipedia:</strong> ${esc(excerpt)}</p>
+        ${online.found.length ? `<p class="small"><strong>Ingredients we recognised:</strong> ${esc(online.found.join(', '))}</p>` : ''}
+        <p class="small muted">Source: <a href="${esc(lk.page.url)}" target="_blank" rel="noopener">${esc(lk.page.title)} on Wikipedia</a>. This is an automatic best guess from a general description, so check the real ingredients with the restaurant.</p>
+      </div>`;
+    } else if (eatOutState.loading === raw.toLowerCase()) {
+      about = '<p class="small muted" role="status">Looking it up online…</p>';
+    } else {
+      const msg = !lk ? (r ? 'This dish isn\'t in our list yet. The advice below is based on its name only.' : 'This dish isn\'t in our list yet, so here is the general advice for your dosha.')
+        : lk.status === 'notfound' ? 'We couldn\'t find this dish online. Try another spelling or a more common name.'
+        : lk.status === 'unclear' ? 'We found a description online but couldn\'t tell much about the ingredients.'
+        : 'Couldn\'t look it up. Check your internet connection and try again.';
+      about = `<p class="small muted">${msg}</p>
+        ${!lk || lk.status === 'error' ? `<button class="btn ghost" type="button" data-dish-lookup>Look it up online</button>
+        <p class="small muted">Sends only the dish name to Wikipedia. Nothing else leaves your phone.</p>` : ''}`;
+    }
+    if (reasons.length) about += `<ul class="small">${reasons.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>`;
+  }
+
   return `<div class="dish-advice stack" aria-live="polite">
     <div class="order-item"><p class="card-title dish-name">${esc(titleCase(title))}</p>${orderLinksHtml(searchQ)}</div>
-    ${r ? `<ul class="verdicts">${verdicts}</ul>` : '<p class="small muted">This dish isn\'t in our list yet, so here is the general advice for your dosha.</p>'}
-    ${hint ? `<ul class="small">${hint.why.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}
+    ${r ? `<ul class="verdicts">${verdicts}</ul>` : ''}
+    ${about}
     ${warn.map((w) => `<p class="banner warn small">${esc(w)}</p>`).join('')}
     <div class="order-note">
       <p class="card-title">How to order it</p>

@@ -10,7 +10,7 @@ A public, free, offline-capable Ayurvedic diet web app (static PWA, no build too
 5. Every classical claim carries a `source` string (text, section, chapter.verse where known). If a verse is not certain, write the chapter only and set `verified:false`; the UI shows "source: traditional teaching" for unverified.
 6. Accessibility: base font 17px, text-size setting (Normal / Large / Extra large) stored in settings, all tap targets ≥ 48px, contrast ≥ 4.5:1, `prefers-reduced-motion` disables animation, works at 320px width, no horizontal scroll.
 7. All user data stays in the browser (localStorage). Keep existing keys: `pd.settings`, `pd.days`, `pd.weights`, `pd.defaults`, `pd.bought`. New keys also use the `pd.` prefix.
-8. No external requests except Google Fonts (optional; must degrade to system fonts offline).
+8. No external requests except Google Fonts (optional; must degrade to system fonts offline), and the Wikipedia API for "Look it up online" in Eating out — only when the user taps that button, sending only the typed dish name. Swiggy/Zomato links are plain links the user taps; nothing is sent automatically.
 
 ## Files (load order in index.html, all classic `<script defer>` sharing globals)
 | File | Contents |
