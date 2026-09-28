@@ -31,6 +31,29 @@ function _settingsChips(list, current, onPick) {
 return list.map((x) => `<button class="chip${x.v === current ? ' on' : ''}" aria-pressed="${x.v === current ? 'true' : 'false'}" data-set="${x.v}">${esc(x.t)}</button>`).join('');
 }
 
+// ---------- dosha introduction (from data-learn.js) ----------
+
+function doshaIntroHtml() {
+const arts = { V: 'wind', P: 'flame', K: 'leaf' };
+let h = '';
+h += `<h2 class="card-title">${esc(DOSHA_INTRO.title)}</h2>`;
+h += `<p>${esc(DOSHA_INTRO.intro)}</p>`;
+h += '<div class="grid3">';
+DOSHA_INTRO.doshas.forEach((d) => {
+h += `<div class="card stack">
+<span class="illus">${_art(arts[d.key])}</span>
+<span class="badge ${esc(d.key)}">${esc(d.name)}</span>
+<p class="small muted">${esc(d.element)}</p>
+<p>${esc(d.role)}</p>
+<p class="small"><strong>Balanced:</strong> ${esc(d.balanced)}</p>
+<p class="small"><strong>Too much:</strong> ${esc(d.excess)}</p>
+</div>`;
+});
+h += '</div>';
+h += `<p>${esc(DOSHA_INTRO.outro)}</p>`;
+return h;
+}
+
 // ---------- Welcome (starting page) ----------
 
 function showWelcome() {
@@ -38,6 +61,7 @@ openOverlay(`
 <div class="card hero stack" data-welcome>
 <div class="emblem">${_art('grainLotus')}</div>
 <h2 class="card-title">Annamaya</h2>
+<p class="name-meaning">(annamaya kośa — the body, the sheath made of food · Taittiriya Upanishad)</p>
 <p class="theme-line">${esc(THEME_LINE)}</p>
 <div class="verse">
 <div class="verse-dev" lang="sa">${esc(HERO_VERSE.dev)}</div>
@@ -67,6 +91,7 @@ steps.push(() => `
 <div class="card hero stack stagger" data-onb>
 <div class="emblem">${_art('grainLotus') || _art('lotus')}</div>
 <h2 class="card-title">Annamaya</h2>
+<p class="name-meaning">(annamaya kośa — the body, the sheath made of food · Taittiriya Upanishad)</p>
 <p class="theme-line">${esc(THEME_LINE)}</p>
 <div class="verse">
 <div class="verse-dev" lang="sa">${esc(HERO_VERSE.dev)}</div>
@@ -86,6 +111,11 @@ steps.push(() => `
 <button class="btn primary" data-disclaimer>I understand</button>
 </div>`);
 }
+steps.push(() => `
+<div class="card hero stack" data-onb>
+${doshaIntroHtml()}
+<button class="btn primary" data-next>Continue</button>
+</div>`);
 steps.push(() => `
 <div class="card hero stack stagger" data-onb>
 <h2 class="card-title">How shall we begin?</h2>
@@ -453,8 +483,11 @@ function renderLearn(el) {
 const L = typeLetters();
 let html = '';
 
-// Your type
+// Dosha introduction
 html += '<div class="stack">';
+html += '<div class="card stack stagger">' + doshaIntroHtml() + '</div>';
+
+// Your type
 html += '<div class="card stack stagger">';
 html += '<h2 class="card-title">Your type</h2>';
 if (settings.type && TYPES[settings.type]) {

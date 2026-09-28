@@ -652,4 +652,5 @@ input[type="checkbox"], input[type="radio"] { width: 1.15rem; height: 1.15rem; a
 .card.hero > .emblem { margin-left: auto; margin-right: auto; }
 .card.hero > .emblem + .card-title { text-align: center; font-size: 1.9rem; margin-top: 0.25rem; }
 .brand-mark svg { width: 1.9rem; height: 1.9rem; }
+.brand-line { display:flex; align-items:baseline; gap:0.4rem; flex-wrap:wrap; } .brand-meaning { font-size:0.85rem; color: var(--muted); font-style: italic; font-family: 'Nunito Sans', system-ui, sans-serif; } .name-meaning { text-align:center; font-style: italic; color: var(--muted); font-size: 0.95rem; margin-top: -0.25rem; }
 

@@ -174,3 +174,14 @@ const SOURCES = [
     link: 'https://niimh.nic.in/ebooks/'
   }
 ];
+
+const DOSHA_INTRO = {
+  title: 'Three energies, one you',
+  intro: 'Ayurveda says everything in nature — and in you — is made of five elements: space, air, fire, water and earth. In the body they work as three energies called doshas.',
+  doshas: [
+    { key: 'V', name: 'Vata', element: 'Air + Space', role: 'Movement — breath, heartbeat, thoughts.', balanced: 'Lively, creative, quick.', excess: 'Dryness, restlessness, worry, gas.' },
+    { key: 'P', name: 'Pitta', element: 'Fire + Water', role: 'Heat and digestion — hunger, sharp thinking.', balanced: 'Focused, warm, confident.', excess: 'Acidity, anger, feeling too hot.' },
+    { key: 'K', name: 'Kapha', element: 'Earth + Water', role: 'Structure and calm — strength, steadiness.', balanced: 'Calm, loving, strong.', excess: 'Heaviness, sleepiness, congestion.' }
+  ],
+  outro: 'Everyone has all three, in a different mix. Your natural mix from birth is your prakriti — that is why the same food suits one person and not another. The quiz helps you find your likely mix.'
+};
