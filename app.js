@@ -212,11 +212,11 @@ function dailyCard(k) {
 
 function greeting() {
   const h = new Date().getHours();
-  if (h < 5) return { hi: 'Shubh ratri', line: 'A quiet end to the day. Warm milk helps sleep.' };
+  if (h < 5) return { hi: 'Shubha Ratri', line: 'A quiet end to the day. Warm milk helps sleep.' };
   if (h < 12) return { hi: 'Shubhodayam', line: 'Good morning. A warm start steadies the whole day.' };
-  if (h < 17) return { hi: 'Shubh madhyahnam', line: 'Good afternoon. Keep lunch calm and unhurried.' };
-  if (h < 21) return { hi: 'Shubh sayankalam', line: 'Good evening. Let dinner be light and early.' };
-  return { hi: 'Shubh ratri', line: 'Good night. Rest well, digest well.' };
+  if (h < 17) return { hi: 'Shubha Madhyahnam', line: 'Good afternoon. Keep lunch calm and unhurried.' };
+  if (h < 21) return { hi: 'Shubha Sayankalam', line: 'Good evening. Let dinner be light and early.' };
+  return { hi: 'Shubha Ratri', line: 'Good night. Rest well, digest well.' };
 }
 
 function ringSvg(done, total) {
@@ -384,7 +384,7 @@ function renderToday(el) {
 
   <div class="card stack">${eatOut}</div>
 
-  ${typeBadgeText ? '' : `<p class="small muted" style="text-align:center">Tip: find your likely constitution in Me to tune these meals.</p>`}
+  ${typeBadgeText ? '' : `<p class="small muted" style="text-align:center">Tip: choose your dosha at the top right, or take the quiz, to tune these meals.</p>`}
   `;
 }
 
@@ -555,6 +555,17 @@ function renderProgress(el) {
   }));
 }
 
+// ---------- Header dosha dropdown ----------
+function syncTypeSelect() {
+  const select = $('#typeSelect');
+  if (!select) return;
+  const order = ['V', 'P', 'K', 'VP', 'PK', 'VK', 'VPK'];
+  select.innerHTML = '<option value="">Choose dosha</option>' +
+    order.filter((k) => TYPES[k]).map((k) => `<option value="${esc(k)}">${esc(TYPES[k].name)}</option>`).join('');
+  select.value = settings.type || '';
+  select.dataset.type = settings.type || '';
+}
+
 // ---------- Router ----------
 let currentTab = 'today';
 const RENDERERS = {
@@ -583,12 +594,7 @@ function render(tab) {
     // Same-tab update: restore scroll position, don't move focus.
     requestAnimationFrame(() => window.scrollTo(0, y));
   }
-  const badge = $('#typeBadge');
-  if (settings.type && TYPES[settings.type]) {
-    badge.hidden = false;
-    badge.textContent = TYPES[settings.type].name;
-    badge.className = 'badge ' + settings.type.slice(0, 1);
-  } else badge.hidden = true;
+  syncTypeSelect();
 }
 
 // ---------- Global event wiring (delegated on #view) ----------
@@ -635,7 +641,14 @@ document.querySelectorAll('.tabs button').forEach((b) => {
   if (ico && ART[iconMap[b.dataset.tab]]) ico.innerHTML = ART[iconMap[b.dataset.tab]];
   b.addEventListener('click', () => render(b.dataset.tab));
 });
-$('#typeBadge').addEventListener('click', () => render('me'));
+$('#typeSelect').addEventListener('change', (e) => {
+  const select = e.target;
+  settings.type = select.value || null;
+  settings.quizPct = null;
+  save();
+  toast(settings.type ? 'Showing foods and meals for ' + TYPES[settings.type].name : 'Showing all doshas');
+  render(currentTab);
+});
 
 // ---------- Boot ----------
 applyPrefs();
@@ -653,6 +666,7 @@ if (brand) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showWelcome(); }
   });
 }
+syncTypeSelect();
 render('today');
 if (!settings.disclaimerAccepted || !settings.onboarded) {
   startOnboarding();

@@ -390,19 +390,30 @@ draw();
 
 function _norm(s) { return String(s).toLowerCase().replace(/[\s-]+/g, ''); }
 
+// module-level Foods view state ('eat' | 'avoid' | 'all')
+let foodView = 'eat';
+
+function foodScore(f) {
+const L = typeLetters();
+if (!L.length) return 0;
+return L.reduce((sum, l) => sum + (Number(f[l]) || 0), 0);
+}
+
 function renderFoods(el) {
 el.innerHTML = `
 <div class="stack">
 <div class="card stack">
 <input class="search" type="search" placeholder="Search 160+ foods — try 'ragi' or 'fish'"
 aria-label="Search foods" autocomplete="off">
+<div data-viewchips></div>
 <div class="chips" data-cats></div>
 <p class="small muted" data-count></p>
 <div data-list class="stack"></div>
 </div>
+<div data-notype></div>
 </div>`;
 
-const state = { q: '', cat: 'All', good: false, showAll: false };
+const state = { q: '', cat: 'All', showAll: false };
 
 function visibleCats() {
 const set = new Set(['All']);
@@ -414,17 +425,23 @@ set.add(f.cat);
 return Array.from(set);
 }
 
+function matchesView(f) {
+const L = typeLetters();
+if (!settings.type || !L.length || foodView === 'all') return true;
+if (L.length === 1) {
+if (foodView === 'eat') return f[L[0]] === 1;
+return f[L[0]] === -1;
+}
+if (foodView === 'eat') return foodScore(f) > 0 && L.every((l) => f[l] !== -1);
+return foodScore(f) < 0;
+}
+
 function visible(f) {
+if (!matchesView(f)) return false;
 if (state.cat !== 'All' && f.cat !== state.cat) return false;
 if (!state.showAll) {
 if (settings.diet === 'veg' && /Meat|Fish|Eggs/.test(f.cat)) return false;
 if (settings.diet === 'egg' && /Meat|Fish/.test(f.cat)) return false;
-}
-if (state.good) {
-const L = typeLetters();
-if (!L.length) return false;
-const vals = L.map((x) => f[x]);
-if (!(vals.some((v) => v === 1) && vals.every((v) => v >= 0))) return false;
 }
 if (state.q) {
 const n = _norm(state.q);
@@ -433,24 +450,45 @@ if (!(_norm(f.name).includes(n) || (f.aka || []).some((a) => _norm(a).includes(n
 return true;
 }
 
+function drawViewChips() {
+const box = el.querySelector('[data-viewchips]');
+const no = el.querySelector('[data-notype]');
+if (!settings.type || !TYPES[settings.type]) {
+box.innerHTML = '';
+no.innerHTML = `<div class="card stack">
+<p class="small">${esc('Choose your dosha at the top right (or take the quiz) to see what to eat and avoid.')}</p>
+<button class="btn ghost" data-quizcta>Take the quiz</button>
+</div>`;
+return;
+}
+no.innerHTML = '';
+const views = [
+{ v: 'eat', t: '✓ Eat more' },
+{ v: 'avoid', t: '✗ Avoid / reduce' },
+{ v: 'all', t: 'All foods' }
+];
+box.innerHTML = `<p class="small muted">For ${esc(TYPES[settings.type].name)}:</p>` +
+'<div class="chips">' + views.map((x) =>
+`<button class="chip${foodView === x.v ? ' on' : ''}" aria-pressed="${foodView === x.v ? 'true' : 'false'}" data-fview="${x.v}">${esc(x.t)}</button>`).join('') + '</div>';
+}
+
 function drawChips() {
 const cats = visibleCats();
-const L = typeLetters();
 const box = el.querySelector('[data-cats]');
 box.innerHTML =
 cats.map((c) => `<button class="chip${state.cat === c ? ' on' : ''}" aria-pressed="${state.cat === c ? 'true' : 'false'}" data-cat="${esc(c)}">${esc(c)}</button>`).join('') +
-(state.good || L.length
-? `<button class="chip${state.good ? ' on' : ''}" aria-pressed="${state.good ? 'true' : 'false'}" data-good title="${L.length ? '' : 'Find your dosha first'}"${L.length ? '' : ' disabled'}">Good for me</button>`
-: `<button class="chip" aria-pressed="false" data-good disabled title="Find your dosha first">Good for me</button>`) +
 `<button class="chip${state.showAll ? ' on' : ''}" aria-pressed="${state.showAll ? 'true' : 'false'}" data-showall>Show all foods</button>`;
 }
 
 function drawList() {
 const box = el.querySelector('[data-list]');
 const list = FOODS.filter(visible);
-el.querySelector('[data-count]').textContent = list.length
-? `${list.length} food${list.length === 1 ? '' : 's'}`
-: '';
+let label = `${list.length} food${list.length === 1 ? '' : 's'}`;
+if (settings.type && typeLetters().length) {
+if (foodView === 'eat') label = `${list.length} food${list.length === 1 ? '' : 's'} to eat more of`;
+else if (foodView === 'avoid') label = `${list.length} food${list.length === 1 ? '' : 's'} to reduce`;
+}
+el.querySelector('[data-count]').textContent = list.length ? label : '';
 if (!list.length) {
 box.innerHTML = '<p class="empty muted">No foods match. Try another word or category.</p>';
 return;
@@ -481,13 +519,14 @@ const f = e.target.closest('[data-food]');
 if (f) { e.preventDefault(); toggleFood(f); }
 });
 
-el.querySelector('[data-cats]').addEventListener('click', (e) => {
+el.addEventListener('click', (e) => {
+const fv = e.target.closest('[data-fview]');
+if (fv) { foodView = fv.dataset.fview; drawViewChips(); drawChips(); drawList(); return; }
 const c = e.target.closest('[data-cat]');
 if (c) { state.cat = c.dataset.cat; drawChips(); drawList(); return; }
-const g = e.target.closest('[data-good]');
-if (g && !g.disabled) { state.good = !state.good; drawChips(); drawList(); return; }
 const s = e.target.closest('[data-showall]');
-if (s) { state.showAll = !state.showAll; drawChips(); drawList(); }
+if (s) { state.showAll = !state.showAll; drawChips(); drawList(); return; }
+if (e.target.closest('[data-quizcta]')) { startQuiz(() => render('foods')); return; }
 });
 
 const input = el.querySelector('.search');
@@ -497,6 +536,7 @@ clearTimeout(deb);
 deb = setTimeout(() => { state.q = input.value; drawList(); }, 120);
 });
 
+drawViewChips();
 drawChips();
 drawList();
 }

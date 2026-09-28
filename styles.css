@@ -654,3 +654,9 @@ input[type="checkbox"], input[type="radio"] { width: 1.15rem; height: 1.15rem; a
 .brand-mark svg { width: 1.9rem; height: 1.9rem; }
 .brand-line { display:flex; align-items:baseline; gap:0.4rem; flex-wrap:wrap; } .brand-meaning { font-size:0.85rem; color: var(--muted); font-style: italic; font-family: 'Nunito Sans', system-ui, sans-serif; } .name-meaning { text-align:center; font-style: italic; color: var(--muted); font-size: 0.95rem; margin-top: -0.25rem; }
 
+.visually-hidden { position:absolute !important; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.type-pick select { min-height:44px; padding: 0.35rem 2rem 0.35rem 0.85rem; border-radius:999px; border:1.5px solid var(--line); background: var(--card); color: var(--ink); font: 700 0.9rem 'Nunito Sans', system-ui, sans-serif; cursor:pointer; max-width: 11rem; }
+.type-pick select[data-type*="V"] { border-color: var(--vata); } .type-pick select[data-type="P"], .type-pick select[data-type="PK"] { border-color: var(--pitta); } .type-pick select[data-type="K"] { border-color: var(--kapha); }
+.type-pick select:focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
+.top { gap: 0.5rem; }
+
