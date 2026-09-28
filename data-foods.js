@@ -1,5 +1,5 @@
 /* data-foods.js — FOODS library (PART 1: Rice, Millets & grains, Dals & legumes, Leafy greens, Vegetables)
-   Ratings: V/P/K — 1 favour, 0 moderation, -1 reduce. Educational only. */
+   Ratings: V/P/K — 1 favour, 0 moderation, -1 reduce, -2 avoid. Educational only. */
 const FOODS = [
 
   // ---------- Rice ----------
@@ -37,7 +37,7 @@ const FOODS = [
   { id:'whole-urad', name:'Whole urad (black gram, skin on)', aka:['minumu','sabut urad','kali urad'], cat:'Dals & legumes', type:'veg', V:1, P:0, K:-1, why:'Very nourishing but the heaviest dal — best soaked overnight and spiced; Kapha takes small portions.' },
   { id:'chana-dal', name:'Chana dal (split Bengal gram)', aka:['shanaga pappu','chana ki dal','bengal gram dal'], cat:'Dals & legumes', type:'veg', V:0, P:0, K:1, why:'Sweet, slightly dry and Kapha-friendly when well cooked; can feel heavy, so eat warm with ghee.' },
   { id:'kabuli-chana', name:'Kabuli chana (chickpea)', aka:['chickpea','chole','senagalu','garbanzo'], cat:'Dals & legumes', type:'veg', V:-1, P:0, K:1, why:'Protein-rich but dry and gas-forming for Vata; soak well, cook soft and always add warming spices.' },
-  { id:'horse-gram', name:'Horse gram (ulavalu)', aka:['ulavalu','kulthi','kollu','horsegram'], cat:'Dals & legumes', type:'veg', V:-1, P:-1, K:1, why:'Hot, dry and Kapha-cutting — a strong legume; Vata and Pitta should only take it in small amounts.' },
+  { id:'horse-gram', name:'Horse gram (ulavalu)', aka:['ulavalu','kulthi','kollu','horsegram'], cat:'Dals & legumes', type:'veg', V:1, P:-2, K:1, why:'Classically hot and sharp: calms Vata and Kapha, but strongly heats Pitta, so Pitta should avoid it.' },
   { id:'rajma', name:'Rajma (kidney beans)', aka:['rajma','kidney beans'], cat:'Dals & legumes', type:'veg', V:-1, P:0, K:-1, why:'Heavy and gas-forming — soak overnight and cook thoroughly; light digestions should keep servings small.' },
   { id:'lobia', name:'Lobia (black-eyed peas)', aka:['alasandulu','lobia','chawli','black eyed pea'], cat:'Dals & legumes', type:'veg', V:0, P:0, K:0, why:'Moderately heavy but nourishing; soak well and spice gently — nice for strength when cooked soft.' },
   { id:'green-peas', name:'Green peas', aka:['batani','matar','green peas'], cat:'Dals & legumes', type:'veg', V:0, P:0, K:-1, why:'Sweet and a bit heavy — fine in moderation; Vata may notice gas, so cook with hing and cumin.' },
@@ -110,7 +110,7 @@ const FOODS = [
 
   // ---------- Dairy ----------
   { id:'milk', name:'Milk', aka:['paalu','doodh','milk','cow milk'], cat:'Dairy', type:'veg', V:1, P:1, K:0, why:'Classically nourishing and calming for Vata — take it warm with spices, alone, never with sour fruit.' },
-  { id:'curd', name:'Curd (yogurt)', aka:['perugu','dahi','thayir','curd','yogurt'], cat:'Dairy', type:'veg', V:0, P:-1, K:-1, why:'Sour, heavy and heating — best at midday with a pinch of salt or sugar; traditionally avoided at night.' },
+  { id:'curd', name:'Curd (yogurt)', aka:['perugu','dahi','thayir','curd','yogurt'], cat:'Dairy', type:'veg', V:0, P:-1, K:-2, why:'Sour, heavy and heating — best at midday with a pinch of salt or sugar; traditionally avoided at night.' },
   { id:'paneer', name:'Paneer', aka:['paneer','chenna','cottage cheese'], cat:'Dairy', type:'veg', V:0, P:1, K:-1, why:'Sweet, cooling and protein-rich — good for Pitta when fresh, unsalted and mildly spiced; heavy for Kapha, so keep portions small.' },
   { id:'butter', name:'Butter', aka:['venna','makhan','butter'], cat:'Dairy', type:'veg', V:1, P:0, K:-1, why:'Sweet and unctuous — lovely on warm rotis for Vata; heavy, so Kapha keeps it to a thin spread.' },
 
@@ -119,7 +119,7 @@ const FOODS = [
   { id:'sesame-oil', name:'Sesame oil (gingelly)', aka:['nuvvula noone','til ka tel','nallennai','sesame oil'], cat:'Oils & ghee', type:'veg', V:1, P:-1, K:0, why:'Warming and strengthening, the classic southern cooking oil; heating, so Pitta uses it lightly.' },
   { id:'coconut-oil', name:'Coconut oil', aka:['kobbari noone','nariyal tel','coconut oil'], cat:'Oils & ghee', type:'veg', V:0, P:1, K:-1, why:'Sweet and cooling — good for Pitta cooking; heavy and Kapha-raising, so use a modest spoon.' },
   { id:'groundnut-oil', name:'Groundnut oil', aka:['verusenaga noone','moongphali tel','peanut oil'], cat:'Oils & ghee', type:'veg', V:0, P:0, K:0, why:'Balanced everyday oil with gentle warmth — suits most types when used fresh and not re-heated.' },
-  { id:'mustard-oil', name:'Mustard oil', aka:['aavalanune','sarson ka tel','mustard oil','kachi ghani'], cat:'Oils & ghee', type:'veg', V:1, P:-1, K:1, why:'Pungent and warming — cuts Kapha and warms Vata; its sharp heat means Pitta avoids it.' },
+  { id:'mustard-oil', name:'Mustard oil', aka:['aavalanune','sarson ka tel','mustard oil','kachi ghani'], cat:'Oils & ghee', type:'veg', V:1, P:-2, K:1, why:'Pungent and warming — cuts Kapha and warms Vata; its sharp heat means Pitta avoids it.' },
   { id:'sunflower-oil', name:'Sunflower oil', aka:['suryamukhi tel','sunflower oil'], cat:'Oils & ghee', type:'veg', V:0, P:1, K:0, why:'Light and neutral to mildly cooling — a gentle everyday choice for Pitta; use fresh, not reused.' },
 
   // ---------- Eggs ----------
@@ -136,15 +136,14 @@ const FOODS = [
   { id:'tilapia-fish', name:'Tilapia', aka:['tilapia','jilebi chepa'], cat:'Fish & seafood', type:'nonveg', V:0, P:0, K:0, why:'Mild, light and easy to digest — a balanced everyday fish when cooked with ginger and pepper.' },
   { id:'prawns', name:'Prawns', aka:['royyalu','jhinga','shrimp','prawns','chemmeen'], cat:'Fish & seafood', type:'nonveg', V:0, P:-1, K:-1, why:'Classically heavy and heating — tasty but tricky; eat fresh, well spiced, and not with curd.' },
   { id:'crab', name:'Crab', aka:['peetha','khekda','crab','nandu'], cat:'Fish & seafood', type:'nonveg', V:0, P:-1, K:0, why:'Sweet-heavy and traditionally considered heating — an occasional treat; skip when digestion is weak.' },
-  { id:'dried-fish', name:'Dried fish', aka:['sukha machli','karuvadu','dried fish'], cat:'Fish & seafood', type:'nonveg', V:0, P:-1, K:1, why:'Salty, heating and Kapha-cutting — traditional coastal fare; Pitta and high-BP folks go easy.' },
+  { id:'dried-fish', name:'Dried fish', aka:['sukha machli','karuvadu','dried fish'], cat:'Fish & seafood', type:'nonveg', V:0, P:-2, K:1, why:'Salty, heating and Kapha-cutting — traditional coastal fare; Pitta and high-BP folks go easy.' },
 
   // ---------- Meat & poultry ----------
   { id:'desi-chicken', name:'Desi chicken (country)', aka:['naatu kodi','desi murgi','country chicken'], cat:'Meat & poultry', type:'nonveg', V:1, P:0, K:0, why:'Classically considered lighter and more strengthening than broiler — good nourishment in moderation.' },
   { id:'broiler-chicken', name:'Broiler chicken', aka:['broiler','chicken','murgi'], cat:'Meat & poultry', type:'nonveg', V:0, P:0, K:0, why:'Widely available and moderate — choose fresh, well-cooked preparations over deep-fried ones.' },
   { id:'mutton-goat', name:'Mutton (goat)', aka:['mamsam','mutton','bakre ka meat','goat meat'], cat:'Meat & poultry', type:'nonveg', V:1, P:0, K:0, why:'Classically strengthening and warming for Vata — heavy, so eat moderate portions with ginger and pepper.' },
   { id:'lamb', name:'Lamb', aka:['lamb','gorre mamsam'], cat:'Meat & poultry', type:'nonveg', V:1, P:0, K:0, why:'Warm and nourishing like goat but fattier — enjoy slow-cooked with warming spices in winter.' },
-  { id:'liver-organ-meat', name:'Liver / organ meat', aka:['kaleji','yakrut','liver','organ meat'], cat:'Meat & poultry', type:'nonveg', V:1, P:-1, K:0, why:'Rich, heating and deeply nourishing — traditionally occasional; heavy and Pitta-stirring.' },
-  { id:'pork', name:'Pork', aka:['pandu mamsam','pig meat','pork'], cat:'Meat & poultry', type:'nonveg', V:0, P:-1, K:-1, why:'Classically heavy, oily and heating — the hardest meat to digest; keep portions small and rare.' },
+  { id:'liver-organ-meat', name:'Liver / organ meat', aka:['kaleji','yakrut','liver','organ meat'], cat:'Meat & poultry', type:'nonveg', V:1, P:-2, K:0, why:'Rich, heating and deeply nourishing — traditionally occasional; heavy and Pitta-stirring.' },
 
   // ---------- Nuts & seeds ----------
   { id:'almonds', name:'Almonds', aka:['badam','badam pappu','almonds'], cat:'Nuts & seeds', type:'veg', V:1, P:0, K:0, why:'Sweet, warming and strength-giving — soaked and peeled is the classical way; a handful is enough.' },
@@ -169,8 +168,8 @@ const FOODS = [
   { id:'fresh-ginger', name:'Fresh ginger', aka:['allam','adrak','inji','ginger'], cat:'Spices & herbs', type:'veg', V:1, P:0, K:1, why:'Classically called universal spice in cooking — warms Vata and cuts Kapha; Pitta uses it mildly.' },
   { id:'dry-ginger', name:'Dry ginger (sonth)', aka:['sonth','chukku','sunthi','dry ginger'], cat:'Spices & herbs', type:'veg', V:1, P:-1, K:1, why:'More concentrated and heating than fresh — excellent for Vata and Kapha; Pitta takes only a pinch.' },
   { id:'black-pepper', name:'Black pepper', aka:['miriyalu','kali mirch','milagu','pepper'], cat:'Spices & herbs', type:'veg', V:1, P:0, K:1, why:'Pungent and warming — classically kindles digestion and clears Kapha; Pitta keeps it moderate.' },
-  { id:'red-chilli', name:'Red chilli', aka:['yendu mirapakayalu','lal mirch','red chili','red chilli'], cat:'Spices & herbs', type:'veg', V:0, P:-1, K:1, why:'Sharp and very heating — cuts Kapha but easily stirs Pitta and acidity; cook with restraint.' },
-  { id:'green-chilli', name:'Green chilli', aka:['mirchi'], cat:'Spices & herbs', type:'veg', V:0, P:-1, K:1, why:'Hot and pungent — a little wakes up dull digestion; too much stirs heat, especially for Pitta.' },
+  { id:'red-chilli', name:'Red chilli', aka:['yendu mirapakayalu','lal mirch','red chili','red chilli'], cat:'Spices & herbs', type:'veg', V:0, P:-2, K:1, why:'Sharp and very heating — cuts Kapha but easily stirs Pitta and acidity; cook with restraint.' },
+  { id:'green-chilli', name:'Green chilli', aka:['mirchi'], cat:'Spices & herbs', type:'veg', V:0, P:-2, K:1, why:'Hot and pungent — a little wakes up dull digestion; too much stirs heat, especially for Pitta.' },
   { id:'mustard-seed', name:'Mustard seed', aka:['aavalu','rai','kadugu','mustard seeds'], cat:'Spices & herbs', type:'veg', V:1, P:-1, K:1, why:'Pungent and warming — the southern tadka; heating, so Pitta keeps the tempering light.' },
   { id:'hing', name:'Hing (asafoetida)', aka:['inguva','hing','perungayam','asafoetida'], cat:'Spices & herbs', type:'veg', V:1, P:0, K:1, why:'Classically anti-flatulent — a pinch in dal and beans keeps Vata comfortable without heat.' },
   { id:'cinnamon', name:'Cinnamon', aka:['dalchina chekka','dalchini','pattai','cinnamon'], cat:'Spices & herbs', type:'veg', V:1, P:0, K:1, why:'Sweet-pungent and warming — traditionally said to kindle digestion; lovely in winter drinks.' },
@@ -183,7 +182,7 @@ const FOODS = [
   // ---------- Sweeteners ----------
   { id:'jaggery', name:'Jaggery', aka:['bellam','gud','vellam','jaggery'], cat:'Sweeteners', type:'veg', V:0, P:0, K:-1, why:'Sweet and warming with minerals — classically gentler than sugar; heavy, so Kapha goes easy.' },
   { id:'honey', name:'Honey', aka:['thene'], cat:'Sweeteners', type:'veg', V:0, P:0, K:1, why:'Sweet, astringent and Kapha-cutting — always raw, never heated. Never for babies under 1 year.' },
-  { id:'white-sugar', name:'White sugar', aka:['chekara','cheeni','sugar'], cat:'Sweeteners', type:'veg', V:0, P:0, K:-1, why:'Sweet but classically considered empty and Kapha-increasing — keep it small and occasional.' },
+  { id:'white-sugar', name:'White sugar', aka:['chekara','cheeni','sugar'], cat:'Sweeteners', type:'veg', V:0, P:0, K:-2, why:'Sweet but classically considered empty and Kapha-increasing — keep it small and occasional.' },
   { id:'mishri', name:'Mishri (rock sugar)', aka:['patika bellam','kalkandam','rock sugar'], cat:'Sweeteners', type:'veg', V:1, P:1, K:0, why:'Classically cooling and gentler than white sugar — traditionally soothing for the throat.' },
   { id:'palm-jaggery', name:'Palm jaggery', aka:['thati bellam','gur','karupatti','palm jaggery'], cat:'Sweeteners', type:'veg', V:0, P:0, K:-1, why:'Mineral-rich and less cloying than sugar — a traditional sweetener; still sweet, so Kapha moderates.' },
 
@@ -193,9 +192,9 @@ const FOODS = [
   { id:'coffee', name:'Coffee', aka:['kaapi','coffee','kapi'], cat:'Drinks', type:'veg', V:0, P:-1, K:0, why:'Hot, bitter and stimulating — classically Rajasic; one morning cup is enough, none after sunset.' },
   { id:'buttermilk', name:'Buttermilk (chaas / majjiga)', aka:['majjiga','chaas','mor','buttermilk','sambharam'], cat:'Drinks', type:'veg', V:0, P:1, K:1, why:'Classically praised as light and digestive — with ginger and curry leaves it suits lunch perfectly.' },
   { id:'warm-water', name:'Warm water', aka:['vedi neellu','garam pani','warm water'], cat:'Drinks', type:'veg', V:1, P:1, K:1, why:'The simplest classical habit — sipped warm through the day, it gently supports digestion for all.' },
-  { id:'cold-iced-drinks', name:'Cold / iced drinks', aka:['cold drinks','soda','iced beverages'], cat:'Drinks', type:'veg', V:-1, P:-1, K:-1, why:'Classically said to snuff out digestive fire — icy drinks with meals unsettle every type.' },
+  { id:'cold-iced-drinks', name:'Cold / iced drinks', aka:['cold drinks','soda','iced beverages'], cat:'Drinks', type:'veg', V:-2, P:-1, K:-2, why:'Classically said to snuff out digestive fire — icy drinks with meals unsettle every type.' },
   { id:'fresh-fruit-juice', name:'Fresh fruit juice', aka:['juice','pandu rasam','fresh juice'], cat:'Drinks', type:'veg', V:0, P:0, K:-1, why:'Fresh-squeezed and at room temperature is fine occasionally; whole fruit is the better classical habit.' },
-  { id:'alcohol', name:'Alcohol', aka:['madhyam','sharab','alcohol','wine'], cat:'Drinks', type:'veg', V:-1, P:-1, K:-1, why:'Classically heating, drying and agitating to all doshas — Ayurveda advises keeping it rare or none.' }
+  { id:'alcohol', name:'Alcohol', aka:['madhyam','sharab','alcohol','wine'], cat:'Drinks', type:'veg', V:-2, P:-2, K:-2, why:'Classically heating, drying and agitating to all doshas — Ayurveda advises keeping it rare or none.' }
 ];
 
 const CAT_ICON = { 'Rice':'fRice', 'Millets & grains':'fMillet', 'Dals & legumes':'fDal', 'Leafy greens':'fLeafy', 'Vegetables':'fVeg', 'Fruits':'fFruit', 'Nuts & seeds':'fNuts', 'Dairy':'fDairy', 'Oils & ghee':'fGhee', 'Spices & herbs':'fSpice', 'Sweeteners':'fSweet', 'Drinks':'fDrink', 'Eggs':'fEgg', 'Fish & seafood':'fFish', 'Meat & poultry':'fMeat' };

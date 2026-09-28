@@ -8,9 +8,9 @@
 
 const DISHES = [
   // Rice dishes
-  { n: 'Chicken biryani', a: ['chicken biryani', 'dum biryani', 'biryani', 'biriyani'], t: 'nonveg', r: [0, -1, -1], ask: 'Less oil and less masala. Raita and salan on the side.', swap: 'Chicken pulao, or rice with a mild chicken curry', swapQ: 'Chicken pulao' },
-  { n: 'Mutton biryani', a: ['mutton biryani', 'gosht biryani'], t: 'nonveg', r: [0, -1, -1], ask: 'Less oil and less masala. Raita on the side.', swap: 'Rice with a mild mutton or chicken curry', swapQ: 'Mutton curry' },
-  { n: 'Egg biryani', a: ['egg biryani', 'anda biryani'], t: 'egg', r: [0, -1, -1], ask: 'Less oil and less masala. Raita on the side.', swap: 'Rice with a mild egg curry', swapQ: 'Egg curry' },
+  { n: 'Chicken biryani', a: ['chicken biryani', 'dum biryani', 'biryani', 'biriyani'], t: 'nonveg', r: [0, -1, -1], ask: 'Less oil and less masala. Salan on the side, skip the raita.', swap: 'Chicken pulao, or rice with a mild chicken curry', swapQ: 'Chicken pulao' },
+  { n: 'Mutton biryani', a: ['mutton biryani', 'gosht biryani'], t: 'nonveg', r: [0, -2, -2], why: 'Red meat, rich masala and oil together: very heating for Pitta and very heavy for Kapha.', ask: 'Less oil and less masala. Skip the raita.', swap: 'Rice with a mild mutton or chicken curry', swapQ: 'Mutton curry' },
+  { n: 'Egg biryani', a: ['egg biryani', 'anda biryani'], t: 'egg', r: [0, -1, -1], ask: 'Less oil and less masala. Skip the raita.', swap: 'Rice with a mild egg curry', swapQ: 'Egg curry' },
   { n: 'Veg biryani', a: ['veg biryani', 'vegetable biryani', 'paneer biryani'], t: 'veg', r: [0, 0, -1], ask: 'Less oil and less masala. Raita on the side.', swap: 'Veg pulao', swapQ: 'Veg pulao' },
   { n: 'Veg pulao', a: ['pulao', 'pulav', 'veg pulao', 'jeera rice'], t: 'veg', r: [1, 1, 0], ask: 'Less oil, mild spice.' },
   { n: 'Fried rice', a: ['fried rice', 'schezwan rice', 'szechuan rice'], t: 'veg', r: [-1, -1, -1], ask: 'Less oil, no ajinomoto (MSG), less soy sauce, no extra chilli.', swap: 'Veg pulao or dal khichdi', swapQ: 'Veg pulao' },
@@ -51,48 +51,46 @@ const DISHES = [
   // Non-veg curries
   { n: 'Butter chicken', a: ['butter chicken', 'murgh makhani', 'chicken makhani', 'chicken tikka masala'], t: 'nonveg', r: [1, 0, -1], ask: 'Less butter and cream, mild spice.', swap: 'Tandoori chicken or pepper chicken (not deep-fried)', swapQ: 'Tandoori chicken' },
   { n: 'Chicken curry', a: ['chicken curry', 'chicken korma', 'kerala chicken', 'chicken stew', 'home style chicken'], t: 'nonveg', r: [1, 0, 0], ask: 'Mild spice, less oil.' },
-  { n: 'Chicken 65 / chilli chicken', a: ['chicken 65', 'chilli chicken', 'chili chicken', 'chicken lollipop', 'dragon chicken', 'chicken manchurian', 'fried chicken'], t: 'nonveg', r: [-1, -2, -1], why: 'Deep-fried and very spicy: a double load of heat for Pitta.', ask: 'Less oil, less chilli.', swap: 'Pepper chicken (not deep-fried) or tandoori chicken', swapQ: 'Pepper chicken' },
+  { n: 'Chicken 65 / chilli chicken', a: ['chicken 65', 'chilli chicken', 'chili chicken', 'chicken lollipop', 'dragon chicken', 'chicken manchurian', 'fried chicken'], t: 'nonveg', r: [-1, -2, -2], why: 'Deep-fried and very spicy: a double load of heat for Pitta.', ask: 'Less oil, less chilli.', swap: 'Pepper chicken (not deep-fried) or tandoori chicken', swapQ: 'Pepper chicken' },
   { n: 'Tandoori chicken / kebab', a: ['tandoori', 'tandoori chicken', 'kebab', 'kabab', 'tikka', 'chicken tikka', 'grilled chicken', 'seekh'], t: 'nonveg', r: [0, 0, 1], ask: 'Mild spice, not charred. Mint chutney on the side.' },
   { n: 'Pepper chicken', a: ['pepper chicken', 'chicken pepper fry', 'chicken sukka'], t: 'nonveg', r: [0, -1, 1], ask: 'Not deep-fried, less oil.' },
   { n: 'Mutton curry', a: ['mutton curry', 'mutton', 'rogan josh', 'gosht', 'keema', 'paya'], t: 'nonveg', r: [1, -1, -1], ask: 'Less oil and spice, trim the fat.', swap: 'Chicken curry (mild)', swapQ: 'Chicken curry' },
-  { n: 'Haleem', a: ['haleem'], t: 'nonveg', r: [1, -1, -1], ask: 'Less ghee on top, small portion.', swap: 'Chicken soup or a mild chicken curry', swapQ: 'Chicken soup' },
+  { n: 'Haleem', a: ['haleem'], t: 'nonveg', r: [1, -1, -2], why: 'Very heavy with meat, wheat and ghee: hard for Kapha to digest.', ask: 'Less ghee on top, small portion.', swap: 'Chicken soup or a mild chicken curry', swapQ: 'Chicken soup' },
   { n: 'Liver fry / organ meat', a: ['liver fry', 'liver', 'kaleji', 'kaleji fry', 'chicken liver', 'mutton liver', 'liver masala', 'brain fry', 'bheja fry', 'bheja', 'kidney fry', 'gurda', 'boti', 'offal', 'organ meat', 'intestine'], t: 'nonveg', r: [0, -2, -1], why: 'Organ meat is very rich, heavy and heating, and fried adds more heat and oil. Ayurveda keeps it rare; Pitta should avoid it.', ask: 'Not deep-fried, less oil and no extra chilli. Small portion.', swap: 'A mild chicken or fish curry', swapQ: 'Chicken curry' },
   { n: 'Fish curry', a: ['fish curry', 'meen curry', 'fish moilee', 'fish'], t: 'nonveg', r: [1, 0, 0], ask: 'Mild, coconut-based, less tamarind.' },
-  { n: 'Fish fry', a: ['fish fry', 'apollo fish', 'fish fingers', 'fried fish'], t: 'nonveg', r: [0, -1, -1], ask: 'Tawa fry, not deep-fried. Less chilli.', swap: 'Grilled fish or fish curry', swapQ: 'Grilled fish' },
+  { n: 'Fish fry', a: ['fish fry', 'apollo fish', 'fish fingers', 'fried fish'], t: 'nonveg', r: [0, -2, -1], why: 'Fish is heating, and chilli-coated frying adds more heat for Pitta.', ask: 'Tawa fry, not deep-fried. Less chilli.', swap: 'Grilled fish or fish curry', swapQ: 'Grilled fish' },
   { n: 'Prawn curry', a: ['prawn', 'prawns', 'shrimp', 'royyala'], t: 'nonveg', r: [1, -1, 0], ask: 'Mild spice, coconut-based.', swap: 'Fish curry (mild)', swapQ: 'Fish curry' },
   { n: 'Egg curry', a: ['egg curry', 'egg masala', 'anda curry'], t: 'egg', r: [1, 0, 0], ask: 'Mild spice, less oil.' },
   { n: 'Omelette / egg bhurji', a: ['omelette', 'omelet', 'bhurji', 'egg bhurji', 'boiled egg'], t: 'egg', r: [1, -1, 0], ask: 'No green chilli, less oil.' },
   { n: 'Shawarma', a: ['shawarma', 'shawarama', 'roll', 'kathi roll', 'frankie', 'wrap'], t: 'nonveg', r: [0, -1, -1], ask: 'Less mayo, no extra chilli sauce.', swap: 'Tandoori chicken with roti', swapQ: 'Tandoori chicken' },
-  { n: 'Beef dishes', a: ['beef', 'beef fry', 'beef curry', 'beef roast'], t: 'nonveg', r: [0, -1, -1], why: 'Red meat is heavy and heating; keep portions small.', ask: 'Less oil and spice, small portion.', swap: 'A mild chicken or fish curry', swapQ: 'Chicken curry' },
-  { n: 'Pork dishes', a: ['pork', 'pork fry', 'pork curry', 'bacon', 'ham', 'sausage', 'pepperoni'], t: 'nonveg', r: [0, -1, -1], why: 'Classically the heaviest, oiliest meat to digest.', ask: 'Less oil, small portion.', swap: 'A mild chicken curry', swapQ: 'Chicken curry' },
 
   // Chinese / fast food
   { n: 'Noodles', a: ['noodles', 'hakka noodles', 'chowmein', 'chow mein', 'maggi', 'schezwan noodles'], t: 'veg', r: [-1, -1, -1], ask: 'Less oil, no ajinomoto (MSG), less soy and chilli sauce.', swap: 'Veg clear soup with a small portion of noodles, or khichdi', swapQ: 'Clear soup' },
-  { n: 'Manchurian', a: ['manchurian', 'gobi manchurian', 'veg manchurian', 'chilli paneer', 'crispy corn'], t: 'veg', r: [-1, -1, -1], ask: 'Dry, less oil and less sauce.', swap: 'Steamed momos or a clear soup', swapQ: 'Steamed momos' },
+  { n: 'Manchurian', a: ['manchurian', 'gobi manchurian', 'veg manchurian', 'chilli paneer', 'crispy corn'], t: 'veg', r: [-1, -2, -2], why: 'Deep-fried and in spicy, salty sauce: too heating for Pitta and too heavy for Kapha.', ask: 'Dry, less oil and less sauce.', swap: 'Steamed momos or a clear soup', swapQ: 'Steamed momos' },
   { n: 'Momos', a: ['momos', 'momo', 'dumpling', 'dim sum'], t: 'veg', r: [0, 0, 0], ask: 'Steamed, not fried. Mild chutney.' },
   { n: 'Soup', a: ['soup', 'clear soup', 'tomato soup', 'sweet corn soup', 'manchow', 'chicken soup', 'rasam'], t: 'veg', r: [1, 1, 1], ask: 'Serve hot, less salt, no extra chilli.' },
   { n: 'Hot and sour soup', a: ['hot and sour', 'hot & sour'], t: 'veg', r: [0, -1, 1], ask: 'Less chilli and vinegar.', swap: 'Clear or sweet corn soup', swapQ: 'Sweet corn soup' },
-  { n: 'Pizza', a: ['pizza', 'margherita', 'garlic bread'], t: 'veg', r: [-1, -1, -1], ask: 'Thin crust, less cheese, extra vegetables, no extra chilli flakes.', swap: 'A veg thali or khichdi', swapQ: 'Veg thali' },
-  { n: 'Burger', a: ['burger', 'zinger', 'whopper', 'mcaloo'], t: 'veg', r: [-1, -1, -1], ask: 'Grilled, not fried. Less mayo and cheese.', swap: 'A grilled sandwich or a wrap with grilled filling', swapQ: 'Grilled sandwich' },
+  { n: 'Pizza', a: ['pizza', 'margherita', 'garlic bread'], t: 'veg', r: [-1, -1, -2], why: 'Cheese and refined flour are very heavy for Kapha.', ask: 'Thin crust, less cheese, extra vegetables, no extra chilli flakes.', swap: 'A veg thali or khichdi', swapQ: 'Veg thali' },
+  { n: 'Burger', a: ['burger', 'zinger', 'whopper', 'mcaloo'], t: 'veg', r: [-1, -1, -2], why: 'Fried patty, cheese and mayo are very heavy for Kapha.', ask: 'Grilled, not fried. Less mayo and cheese.', swap: 'A grilled sandwich or a wrap with grilled filling', swapQ: 'Grilled sandwich' },
   { n: 'Pasta', a: ['pasta', 'penne', 'spaghetti', 'mac and cheese', 'lasagna'], t: 'veg', r: [0, -1, -1], ask: 'White or pesto sauce, less cheese, extra vegetables.', swap: 'Veg pulao or khichdi', swapQ: 'Veg pulao' },
   { n: 'Sandwich', a: ['sandwich', 'grilled sandwich', 'club sandwich', 'sub', 'subway'], t: 'veg', r: [0, 0, 0], ask: 'Toasted, less cheese and mayo.' },
-  { n: 'French fries', a: ['fries', 'french fries', 'peri peri fries', 'wedges', 'nuggets'], t: 'veg', r: [-1, -1, -1], ask: 'Small portion, less salt.', swap: 'Roasted makhana or corn', swapQ: 'Sweet corn' },
+  { n: 'French fries', a: ['fries', 'french fries', 'peri peri fries', 'wedges', 'nuggets'], t: 'veg', r: [-1, -1, -2], why: 'Deep-fried and salty: very heavy for Kapha.', ask: 'Small portion, less salt.', swap: 'Roasted makhana or corn', swapQ: 'Sweet corn' },
   { n: 'Salad', a: ['salad', 'sprouts', 'raw'], t: 'veg', r: [-1, 1, 1], ask: 'Less dressing. Lightly steamed vegetables if Vata.' },
 
   // Snacks & chaat
-  { n: 'Samosa / pakoda / bajji', a: ['samosa', 'pakoda', 'pakora', 'bajji', 'bhajji', 'mirchi bajji', 'kachori', 'cutlet', 'bonda'], t: 'veg', r: [0, -1, -1], ask: 'Fresh and hot, not re-fried. Mild chutney.', swap: 'Steamed dhokla or sundal', swapQ: 'Dhokla' },
-  { n: 'Pani puri / chaat', a: ['pani puri', 'golgappa', 'gol gappa', 'chaat', 'bhel', 'bhel puri', 'sev puri', 'dahi puri', 'papdi chaat'], t: 'veg', r: [-1, -1, 0], ask: 'Less spicy water, less tamarind chutney.', swap: 'Sundal or roasted corn', swapQ: 'Sundal' },
+  { n: 'Samosa / pakoda / bajji', a: ['samosa', 'pakoda', 'pakora', 'bajji', 'bhajji', 'mirchi bajji', 'kachori', 'cutlet', 'bonda'], t: 'veg', r: [0, -1, -2], why: 'Deep-fried in batter or pastry: very heavy for Kapha.', ask: 'Fresh and hot, not re-fried. Mild chutney.', swap: 'Steamed dhokla or sundal', swapQ: 'Dhokla' },
+  { n: 'Pani puri / chaat', a: ['pani puri', 'golgappa', 'gol gappa', 'chaat', 'bhel', 'bhel puri', 'sev puri', 'dahi puri', 'papdi chaat'], t: 'veg', r: [-1, -2, 0], why: 'Sour, spicy water and tamarind: a double load of heat for Pitta.', ask: 'Less spicy water, less tamarind chutney.', swap: 'Sundal or roasted corn', swapQ: 'Sundal' },
   { n: 'Dhokla', a: ['dhokla', 'khaman'], t: 'veg', r: [0, 0, 1], ask: 'Fresh, mild chutney.' },
 
   // Sweets & drinks
   { n: 'Indian sweets', a: ['sweet', 'sweets', 'gulab jamun', 'rasgulla', 'jalebi', 'halwa', 'laddu', 'kheer', 'payasam', 'mithai', 'rasmalai'], t: 'veg', r: [1, 0, -1], ask: 'One small piece, after lunch rather than at night.', swap: 'Fresh fruit or a few dates', swapQ: 'Fruit bowl' },
   { n: 'Cake / pastry / dessert', a: ['cake', 'pastry', 'brownie', 'dessert', 'donut', 'doughnut', 'cookie'], t: 'veg', r: [0, 0, -1], ask: 'Small portion.', swap: 'Fresh fruit or a small kheer', swapQ: 'Fruit bowl' },
-  { n: 'Ice cream', a: ['ice cream', 'icecream', 'kulfi', 'sundae', 'gelato', 'falooda'], t: 'veg', r: [-1, 0, -1], ask: 'Small scoop, not right after a meal.', swap: 'Warm kheer or badam milk', swapQ: 'Badam milk' },
-  { n: 'Milkshake / cold coffee', a: ['milkshake', 'shake', 'cold coffee', 'frappe', 'smoothie', 'thick shake'], t: 'veg', r: [-1, 0, -1], ask: 'No ice, less sugar.', swap: 'Warm badam milk', swapQ: 'Badam milk' },
+  { n: 'Ice cream', a: ['ice cream', 'icecream', 'kulfi', 'sundae', 'gelato', 'falooda'], t: 'veg', r: [-1, 0, -2], why: 'Cold, sweet and heavy: traditionally said to dampen digestion, most of all for Kapha.', ask: 'Small scoop, not right after a meal.', swap: 'Warm kheer or badam milk', swapQ: 'Badam milk' },
+  { n: 'Milkshake / cold coffee', a: ['milkshake', 'shake', 'cold coffee', 'frappe', 'smoothie', 'thick shake'], t: 'veg', r: [-1, 0, -2], why: 'Cold, sweet and heavy: most of all for Kapha.', ask: 'No ice, less sugar.', swap: 'Warm badam milk', swapQ: 'Badam milk' },
   { n: 'Lassi / buttermilk', a: ['lassi', 'buttermilk', 'chaas', 'majjiga', 'mor'], t: 'veg', r: [1, 1, 0], curd: true, ask: 'Not too cold, less sugar.' },
   { n: 'Fresh juice', a: ['juice', 'fresh juice', 'orange juice', 'watermelon juice', 'sugarcane', 'mosambi'], t: 'veg', r: [0, 1, 0], ask: 'No ice, no added sugar.' },
   { n: 'Tea / coffee', a: ['tea', 'chai', 'coffee', 'filter coffee', 'masala chai'], t: 'veg', r: [0, -1, 1], ask: 'Less sugar, not too strong.' },
-  { n: 'Soft drinks', a: ['coke', 'pepsi', 'soft drink', 'cold drink', 'soda', 'sprite', 'thums up'], t: 'veg', r: [-1, -1, -1], ask: 'Skip it if you can.', swap: 'Tender coconut water or buttermilk', swapQ: 'Tender coconut' },
+  { n: 'Soft drinks', a: ['coke', 'pepsi', 'soft drink', 'cold drink', 'soda', 'sprite', 'thums up'], t: 'veg', r: [-2, -1, -2], why: 'Ice-cold, sugary and fizzy: dampens digestion (agni).', ask: 'Skip it if you can.', swap: 'Tender coconut water or buttermilk', swapQ: 'Tender coconut' },
   { n: 'Alcohol', a: ['alcohol', 'beer', 'wine', 'whisky', 'whiskey', 'rum', 'vodka', 'gin', 'cocktail', 'breezer', 'toddy'], t: 'veg', r: [-2, -2, -2], why: 'Classically heating, drying and agitating to every dosha.', ask: 'Skip it with this meal.', swap: 'Tender coconut water or buttermilk', swapQ: 'Tender coconut' },
 ];
 
@@ -110,3 +108,19 @@ const DISH_HINTS = [
   { re: /soup|khichdi|idli|steamed|\bdal\b|rasam/i, r: [1, 1, 1], why: 'Warm, simple, cooked food is easy to digest.' },
   { re: /\b(alcohol|beer|wine|whisk(e)?y|rum|vodka|gin|cocktail|toddy)\b/i, r: [-2, -2, -2], why: 'Alcohol is classically heating and drying for every dosha.', note: 'Skip the drink with this meal.' },
 ];
+
+// Classical incompatible pairs (Viruddha Ahara, see VIRUDDHA in data-learn.js).
+// If the typed dish or its description names both sides, every dosha gets Avoid.
+const DISH_COMBOS = [
+  { id: 'fish-milk', a: /\b(fish|prawns?|shrimps?|seafood|crab)\b/i, b: /\b(milk|milkshake|shake|kheer|payasam)\b/i },
+  { id: 'banana-milk', a: /\bbanana\b/i, b: /\b(milk|milkshake|shake|smoothie)\b/i },
+  { id: 'banana-curd', a: /\bbanana\b/i, b: /\b(curd|yogh?urt|lassi|raita|buttermilk)\b/i },
+  { id: 'curd-fish-meat', a: /\b(fish|prawns?|chicken|mutton|meat|lamb)\b/i, b: /\b(curd|yogh?urt|raita|dahi)\b/i },
+  { id: 'milk-sour-fruit', a: /\b(milk|milkshake|shake)\b/i, b: /\b(strawberry|pineapple|orange|lemon|kiwi|grapefruit|tamarind)\b/i },
+  { id: 'honey-hot-water', a: /\bhoney\b/i, b: /\b(hot|tea|coffee|baked|roasted|cooked)\b/i },
+];
+// The first classical incompatible pair named in the text, as the VIRUDDHA entry, or null.
+function findCombo(text) {
+  const c = DISH_COMBOS.find((x) => x.a.test(text) && x.b.test(text));
+  return c ? VIRUDDHA.find((v) => v.id === c.id) || null : null;
+}

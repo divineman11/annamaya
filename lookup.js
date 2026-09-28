@@ -6,10 +6,10 @@
 
 const LOOKUP_API = 'https://en.wikipedia.org/w/api.php';
 const FOOD_WORDS = /\b(dish|cuisine|food|curry|served|cooked|recipe|snack|dessert|sweet|drink|beverage|bread|rice|fried|baked|stew|soup|sauce|made (with|from|of)|prepared|eaten|meal|street food|delicacy)\b/i;
-const MEAT_RE = /\b(chicken|beef|pork|mutton|lamb|goat|meat|fish|prawns?|shrimps?|crab|seafood|bacon|ham|sausage)\b/i;
+const MEAT_RE = /\b(chicken|mutton|lamb|goat|meat|fish|prawns?|shrimps?|crab|seafood)\b/i;
 const EGG_RE = /\beggs?\b/i;
 const CURD_RE = /\b(yogh?urt|curd|dahi|raita)\b/i;
-const RED_MEAT_RE = /\b(mutton|lamb|goat|beef|pork|red meat)\b/i;
+const RED_MEAT_RE = /\b(mutton|lamb|goat|red meat)\b/i;
 // Everyday English words for FOODS entries that descriptions often use.
 const FOOD_SYNONYMS = { 'curd-yogurt': ['yogurt', 'yoghurt'], 'broiler-chicken': ['chicken'], 'kabuli-chana': ['chickpeas', 'chickpea'], 'red-chilli': ['chilli', 'chili', 'chillies', 'chilies'], 'wheat': ['flour', 'wheat'], 'mutton-goat': ['mutton', 'goat'] };
 const lookupCache = new Map();
@@ -46,7 +46,9 @@ function analyseDescription(text) {
   if (!hints.length && !top.length) return null;
   const r = [0, 1, 2].map((i) => {
     const key = 'VPK'[i];
+    if (top.some((f) => f[key] <= -2)) return -2; // an ingredient to avoid for this dosha
     const worstHint = Math.min(0, ...hints.map((h) => h.r[i]));
+    if (worstHint > -2 && hints.filter((h) => h.r[i] === -1).length >= 2) return -2; // two strong problems for this dosha
     if (worstHint < 0) return worstHint;
     const vals = top.map((f) => f[key]).concat(hints.filter((h) => h.r[i] === 1).map(() => 1));
     const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
@@ -58,6 +60,7 @@ function analyseDescription(text) {
     r,
     reasons: hints.map((h) => h.why),
     found: top.map((f) => f.name.replace(/\(.*?\)/g, '').trim()),
+    foods: top,
     nonveg: MEAT_RE.test(text) || top.some((f) => f.type === 'nonveg'),
     egg: EGG_RE.test(text),
     curd: CURD_RE.test(text),

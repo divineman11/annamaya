@@ -79,6 +79,7 @@ function hintRatings(query) {
   const r = [0, 1, 2].map((i) => {
     const v = hits.map((h) => h.r[i]);
     const low = Math.min(...v);
+    if (low > -2 && v.filter((x) => x === -1).length >= 2) return -2; // two strong problems for this dosha
     return low < 0 ? low : v.includes(1) ? 1 : 0;
   });
   return { r, why: hits.map((h) => h.why), notes: hits.map((h) => h.note).filter(Boolean) };
@@ -90,14 +91,23 @@ function dishAdviceHtml(query, mealKey) {
   const L = orderLetters();
   const idx = { V: 0, P: 1, K: 2 };
   const dish = findDish(raw);
-  // Other dishes/ingredients named alongside the main one (e.g. "ham sandwich" = sandwich + pork).
+  // Other dishes/ingredients named alongside the main one (e.g. "chicken 65 and beer" = chicken 65 + alcohol).
   const extras = dish ? findDishes(raw).filter((d) => d !== dish) : [];
   const allDishes = dish ? [dish, ...extras] : [];
-  const hint = dish ? null : hintRatings(raw);
+  // Ingredients from the food library named in the typed text (e.g. "horse gram", "ulavalu charu").
+  const typedFoods = analyseDescription(raw);
+  // For an unlisted dish, the typed words (keywords + ingredients) are the first guess.
+  const hint = dish ? null : (typedFoods ? { r: typedFoods.r, why: typedFoods.reasons, notes: typedFoods.noteBits } : null);
   // Online lookup result (only exists after the user tapped "Look it up online").
   const lk = dish ? null : lookupCache.get(raw.toLowerCase());
   const online = lk && lk.status === 'ok' ? lk.analysis : null;
-  const r = dish ? [0, 1, 2].map((i) => Math.min(...allDishes.map((d) => d.r[i]))) : online ? online.r : hint ? hint.r : null;
+  const r = dish ? [0, 1, 2].map((i) => Math.min(...allDishes.map((d) => d.r[i]))) : online ? [...online.r] : hint ? [...hint.r] : null;
+  // A known dish that names an ingredient to avoid for a dosha (e.g. "horse gram soup") is Avoid for that dosha.
+  if (dish && r && typedFoods) [0, 1, 2].forEach((i) => { if (typedFoods.foods.some((f) => f['VPK'[i]] <= -2)) r[i] = -2; });
+  // Foods that don't go together override everything: Avoid for every dosha.
+  const combo = findCombo(raw + ' ' + (online && lk.page ? lk.page.extract : ''));
+  if (combo && r) r.splice(0, 3, -2, -2, -2);
+  const rr = combo && !r ? [-2, -2, -2] : r;
   const title = dish ? dish.n : raw;
   const searchQ = dish ? (dish.a.find((a) => (' ' + raw.toLowerCase() + ' ').includes(' ' + a + ' ')) || dish.n) : raw;
   const titleCase = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -112,11 +122,11 @@ function dishAdviceHtml(query, mealKey) {
   if (mealKey === 'dinner' && isNonveg) warn.push('Traditionally, non-veg is kept for lunch rather than dinner.');
   if (mealKey === 'dinner' && isCurd) warn.push('Curd is traditionally avoided at night.');
 
-  const verdicts = r ? L.map((k) => {
-    const v = r[idx[k]];
+  const verdicts = rr ? L.map((k) => {
+    const v = rr[idx[k]];
     return `<li class="verdict v${v <= -2 ? 'avoid' : v < 0 ? 'bad' : v > 0 ? 'good' : 'ok'}"><strong>${DOSHA_NAMES[k]}:</strong> ${VERDICT[v]}</li>`;
   }).join('') : '';
-  const worst = r ? Math.min(...L.map((k) => r[idx[k]])) : 0;
+  const worst = rr ? Math.min(...L.map((k) => rr[idx[k]])) : 0;
 
   // Restaurant note: dish-specific requests first, then short per-dosha add-ons (no repeats).
   const asks = dish ? [...new Set(allDishes.map((d) => d.ask))] : online ? online.noteBits : hint ? hint.notes : [];
@@ -163,8 +173,10 @@ function dishAdviceHtml(query, mealKey) {
 
   return `<div class="dish-advice stack" aria-live="polite">
     <div class="order-item"><p class="card-title dish-name">${esc(titleCase(title))}</p>${orderLinksHtml(searchQ)}</div>
-    ${r ? `<ul class="verdicts">${verdicts}</ul>` : ''}
+    ${rr ? `<ul class="verdicts">${verdicts}</ul>` : ''}
+    ${combo ? `<p class="banner warn small"><strong>Foods that don't go together:</strong> ${esc(combo.pair)}. ${esc(combo.concern)} <span class="muted">(${esc(combo.source)})</span></p>` : ''}
     ${allDishes.some((d) => d.why) ? `<ul class="small">${[...new Set(allDishes.filter((d) => d.why).map((d) => d.why))].map((w) => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}
+    ${typedFoods && typedFoods.foods.some((f) => L.some((k) => f[k] < 0)) ? `<ul class="small">${typedFoods.foods.filter((f) => L.some((k) => f[k] < 0)).map((f) => `<li><strong>${esc(f.name.replace(/\(.*?\)/g, '').trim())}:</strong> ${esc(f.why)}</li>`).join('')}</ul>` : ''}
     ${about}
     ${warn.map((w) => `<p class="banner warn small">${esc(w)}</p>`).join('')}
     <div class="order-note">

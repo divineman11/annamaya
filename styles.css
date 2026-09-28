@@ -453,6 +453,7 @@ input[type="checkbox"], input[type="radio"] { width: 1.15rem; height: 1.15rem; a
 .mark.fav { border-color: var(--kapha); color: var(--ink); }
 .mark.mod { border-style: dashed; color: var(--muted); }
 .mark.red { border-color: var(--clay); color: var(--clay); }
+.mark.avoid { border-color: var(--clay); background: var(--clay); color: var(--on-accent); font-weight: 800; }
 
 /* ---------- Learn: viruddha + sources ---------- */
 .viruddha {

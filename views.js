@@ -24,6 +24,7 @@ return `<div class="bar ${L}"><i>${name}</i><span><em style="width:${p}%"></em><
 function _mark(v, dosha) {
 if (v === 1) return `<span class="mark fav"><b>${dosha}</b> ✓ Favour</span>`;
 if (v === 0) return `<span class="mark mod"><b>${dosha}</b> ~ Moderate</span>`;
+if (v <= -2) return `<span class="mark avoid"><b>${dosha}</b> ✗✗ Avoid</span>`;
 return `<span class="mark red"><b>${dosha}</b> ✗ Reduce</span>`;
 }
 
@@ -605,9 +606,9 @@ const L = typeLetters();
 if (!settings.type || !L.length || foodView === 'all') return true;
 if (L.length === 1) {
 if (foodView === 'eat') return f[L[0]] === 1;
-return f[L[0]] === -1;
+return f[L[0]] <= -1;
 }
-if (foodView === 'eat') return foodScore(f) > 0 && L.every((l) => f[l] !== -1);
+if (foodView === 'eat') return foodScore(f) > 0 && L.every((l) => f[l] >= 0);
 return foodScore(f) < 0;
 }
 
@@ -669,7 +670,7 @@ const list = FOODS.filter(visible);
 let label = `${list.length} food${list.length === 1 ? '' : 's'}`;
 if (settings.type && typeLetters().length) {
 if (foodView === 'eat') label = `${list.length} food${list.length === 1 ? '' : 's'} to eat more of`;
-else if (foodView === 'avoid') label = `${list.length} food${list.length === 1 ? '' : 's'} to reduce`;
+else if (foodView === 'avoid') label = `${list.length} food${list.length === 1 ? '' : 's'} to avoid or reduce`;
 }
 el.querySelector('[data-count]').textContent = list.length ? label : '';
 if (!list.length) {
