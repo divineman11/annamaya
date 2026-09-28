@@ -1,5 +1,6 @@
 // Vedic Lifestyle Diet — DISHES: common restaurant / delivery dishes rated by dosha.
-// r: [Vata, Pitta, Kapha] — 1 good choice, 0 okay in moderation, -1 better to limit.
+// r: [Vata, Pitta, Kapha] — 1 good choice, 0 okay in moderation, -1 better to limit, -2 avoid.
+// why: optional short traditional reason shown with the verdict.
 // ask: dish-specific request for the restaurant's cooking instructions.
 // swap: a lighter / better-suited choice (with search word swapQ) when a dosha should limit it.
 // curd: dish is curd-based (traditionally kept away from night meals).
@@ -50,17 +51,20 @@ const DISHES = [
   // Non-veg curries
   { n: 'Butter chicken', a: ['butter chicken', 'murgh makhani', 'chicken makhani', 'chicken tikka masala'], t: 'nonveg', r: [1, 0, -1], ask: 'Less butter and cream, mild spice.', swap: 'Tandoori chicken or pepper chicken (not deep-fried)', swapQ: 'Tandoori chicken' },
   { n: 'Chicken curry', a: ['chicken curry', 'chicken korma', 'kerala chicken', 'chicken stew', 'home style chicken'], t: 'nonveg', r: [1, 0, 0], ask: 'Mild spice, less oil.' },
-  { n: 'Chicken 65 / chilli chicken', a: ['chicken 65', 'chilli chicken', 'chili chicken', 'chicken lollipop', 'dragon chicken', 'chicken manchurian', 'fried chicken'], t: 'nonveg', r: [-1, -1, -1], ask: 'Less oil, less chilli.', swap: 'Pepper chicken (not deep-fried) or tandoori chicken', swapQ: 'Pepper chicken' },
+  { n: 'Chicken 65 / chilli chicken', a: ['chicken 65', 'chilli chicken', 'chili chicken', 'chicken lollipop', 'dragon chicken', 'chicken manchurian', 'fried chicken'], t: 'nonveg', r: [-1, -2, -1], why: 'Deep-fried and very spicy: a double load of heat for Pitta.', ask: 'Less oil, less chilli.', swap: 'Pepper chicken (not deep-fried) or tandoori chicken', swapQ: 'Pepper chicken' },
   { n: 'Tandoori chicken / kebab', a: ['tandoori', 'tandoori chicken', 'kebab', 'kabab', 'tikka', 'chicken tikka', 'grilled chicken', 'seekh'], t: 'nonveg', r: [0, 0, 1], ask: 'Mild spice, not charred. Mint chutney on the side.' },
   { n: 'Pepper chicken', a: ['pepper chicken', 'chicken pepper fry', 'chicken sukka'], t: 'nonveg', r: [0, -1, 1], ask: 'Not deep-fried, less oil.' },
   { n: 'Mutton curry', a: ['mutton curry', 'mutton', 'rogan josh', 'gosht', 'keema', 'paya'], t: 'nonveg', r: [1, -1, -1], ask: 'Less oil and spice, trim the fat.', swap: 'Chicken curry (mild)', swapQ: 'Chicken curry' },
   { n: 'Haleem', a: ['haleem'], t: 'nonveg', r: [1, -1, -1], ask: 'Less ghee on top, small portion.', swap: 'Chicken soup or a mild chicken curry', swapQ: 'Chicken soup' },
+  { n: 'Liver fry / organ meat', a: ['liver fry', 'liver', 'kaleji', 'kaleji fry', 'chicken liver', 'mutton liver', 'liver masala', 'brain fry', 'bheja fry', 'bheja', 'kidney fry', 'gurda', 'boti', 'offal', 'organ meat', 'intestine'], t: 'nonveg', r: [0, -2, -1], why: 'Organ meat is very rich, heavy and heating, and fried adds more heat and oil. Ayurveda keeps it rare; Pitta should avoid it.', ask: 'Not deep-fried, less oil and no extra chilli. Small portion.', swap: 'A mild chicken or fish curry', swapQ: 'Chicken curry' },
   { n: 'Fish curry', a: ['fish curry', 'meen curry', 'fish moilee', 'fish'], t: 'nonveg', r: [1, 0, 0], ask: 'Mild, coconut-based, less tamarind.' },
   { n: 'Fish fry', a: ['fish fry', 'apollo fish', 'fish fingers', 'fried fish'], t: 'nonveg', r: [0, -1, -1], ask: 'Tawa fry, not deep-fried. Less chilli.', swap: 'Grilled fish or fish curry', swapQ: 'Grilled fish' },
   { n: 'Prawn curry', a: ['prawn', 'prawns', 'shrimp', 'royyala'], t: 'nonveg', r: [1, -1, 0], ask: 'Mild spice, coconut-based.', swap: 'Fish curry (mild)', swapQ: 'Fish curry' },
   { n: 'Egg curry', a: ['egg curry', 'egg masala', 'anda curry'], t: 'egg', r: [1, 0, 0], ask: 'Mild spice, less oil.' },
   { n: 'Omelette / egg bhurji', a: ['omelette', 'omelet', 'bhurji', 'egg bhurji', 'boiled egg'], t: 'egg', r: [1, -1, 0], ask: 'No green chilli, less oil.' },
   { n: 'Shawarma', a: ['shawarma', 'shawarama', 'roll', 'kathi roll', 'frankie', 'wrap'], t: 'nonveg', r: [0, -1, -1], ask: 'Less mayo, no extra chilli sauce.', swap: 'Tandoori chicken with roti', swapQ: 'Tandoori chicken' },
+  { n: 'Beef dishes', a: ['beef', 'beef fry', 'beef curry', 'beef roast'], t: 'nonveg', r: [0, -1, -1], why: 'Red meat is heavy and heating; keep portions small.', ask: 'Less oil and spice, small portion.', swap: 'A mild chicken or fish curry', swapQ: 'Chicken curry' },
+  { n: 'Pork dishes', a: ['pork', 'pork fry', 'pork curry', 'bacon', 'ham', 'sausage', 'pepperoni'], t: 'nonveg', r: [0, -1, -1], why: 'Classically the heaviest, oiliest meat to digest.', ask: 'Less oil, small portion.', swap: 'A mild chicken curry', swapQ: 'Chicken curry' },
 
   // Chinese / fast food
   { n: 'Noodles', a: ['noodles', 'hakka noodles', 'chowmein', 'chow mein', 'maggi', 'schezwan noodles'], t: 'veg', r: [-1, -1, -1], ask: 'Less oil, no ajinomoto (MSG), less soy and chilli sauce.', swap: 'Veg clear soup with a small portion of noodles, or khichdi', swapQ: 'Clear soup' },
@@ -89,11 +93,13 @@ const DISHES = [
   { n: 'Fresh juice', a: ['juice', 'fresh juice', 'orange juice', 'watermelon juice', 'sugarcane', 'mosambi'], t: 'veg', r: [0, 1, 0], ask: 'No ice, no added sugar.' },
   { n: 'Tea / coffee', a: ['tea', 'chai', 'coffee', 'filter coffee', 'masala chai'], t: 'veg', r: [0, -1, 1], ask: 'Less sugar, not too strong.' },
   { n: 'Soft drinks', a: ['coke', 'pepsi', 'soft drink', 'cold drink', 'soda', 'sprite', 'thums up'], t: 'veg', r: [-1, -1, -1], ask: 'Skip it if you can.', swap: 'Tender coconut water or buttermilk', swapQ: 'Tender coconut' },
+  { n: 'Alcohol', a: ['alcohol', 'beer', 'wine', 'whisky', 'whiskey', 'rum', 'vodka', 'gin', 'cocktail', 'breezer', 'toddy'], t: 'veg', r: [-2, -2, -2], why: 'Classically heating, drying and agitating to every dosha.', ask: 'Skip it with this meal.', swap: 'Tender coconut water or buttermilk', swapQ: 'Tender coconut' },
 ];
 
 // Keyword hints for dishes not in the list above. Each adds a traditional reason,
 // and optionally a request for the restaurant note.
 const DISH_HINTS = [
+  { re: /\b(liver|kaleji|brain|bheja|kidney|gurda|offal|organ meat|intestine|tripe)\b/i, r: [0, -2, -1], why: 'Organ meat is very heavy and heating; Ayurveda keeps it rare, and Pitta should avoid it.', note: 'Small portion, less oil and chilli.' },
   { re: /fri(ed|es)|fry|crispy|65|pakod|bajji|tempura|nugget|chips/i, r: [0, -1, -1], why: 'Deep-fried food is heavy and oily.', note: 'Less oil, please.' },
   { re: /chill?i|spicy|schezwan|szechuan|andhra|kolhapuri|chettinad|peri peri|mirchi|\bhot\b/i, r: [0, -1, 0], why: 'Very spicy food is traditionally said to heat Pitta.', note: 'Mild spice, no extra chilli.' },
   { re: /cheese|cream|butter|makhani|malai|mayo|alfredo/i, r: [0, 0, -1], why: 'Cheese, cream and butter are heavy for Kapha.', note: 'Less cheese and cream.' },
@@ -102,4 +108,5 @@ const DISH_HINTS = [
   { re: /salad|\braw\b|sprout/i, r: [-1, 0, 0], why: 'Raw, cold food can be hard for Vata. Lightly cooked is gentler.' },
   { re: /sour|tamarind|pickle|vinegar|achar/i, r: [0, -1, 0], why: 'Sour and pickled food is traditionally said to heat Pitta.', note: 'Less sour, no pickle on the side.' },
   { re: /soup|khichdi|idli|steamed|\bdal\b|rasam/i, r: [1, 1, 1], why: 'Warm, simple, cooked food is easy to digest.' },
+  { re: /\b(alcohol|beer|wine|whisk(e)?y|rum|vodka|gin|cocktail|toddy)\b/i, r: [-2, -2, -2], why: 'Alcohol is classically heating and drying for every dosha.', note: 'Skip the drink with this meal.' },
 ];

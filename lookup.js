@@ -46,7 +46,8 @@ function analyseDescription(text) {
   if (!hints.length && !top.length) return null;
   const r = [0, 1, 2].map((i) => {
     const key = 'VPK'[i];
-    if (hints.some((h) => h.r[i] === -1)) return -1;
+    const worstHint = Math.min(0, ...hints.map((h) => h.r[i]));
+    if (worstHint < 0) return worstHint;
     const vals = top.map((f) => f[key]).concat(hints.filter((h) => h.r[i] === 1).map(() => 1));
     const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
     return avg >= 0.34 ? 1 : avg <= -0.34 ? -1 : 0;

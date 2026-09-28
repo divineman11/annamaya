@@ -31,7 +31,10 @@
       <span class="brand-sub">Vedic Lifestyle Diet</span>
     </div>
   </div>
-  <label class="type-pick"><span class="visually-hidden">Your dosha</span><select id="typeSelect" aria-label="Your dosha"></select></label>
+  <div class="top-actions">
+    <label class="type-pick"><span class="visually-hidden">Your dosha</span><select id="typeSelect" aria-label="Your dosha"></select></label>
+    <button class="me-btn" id="meBtn" type="button" aria-label="Me: your settings, dosha and backup"><span class="ico" aria-hidden="true"></span></button>
+  </div>
 </header>
 
 <main id="view" tabindex="-1">
@@ -47,9 +50,9 @@
   <button data-tab="today" aria-current="page"><span class="ico"></span><span class="lbl">Today</span></button>
   <button data-tab="foods"><span class="ico"></span><span class="lbl">Foods</span></button>
   <button data-tab="recipes"><span class="ico"></span><span class="lbl">Recipes</span></button>
+  <button data-tab="eatout"><span class="ico"></span><span class="lbl">Eat out</span></button>
   <button data-tab="learn"><span class="ico"></span><span class="lbl">Learn</span></button>
   <button data-tab="progress"><span class="ico"></span><span class="lbl">Progress</span></button>
-  <button data-tab="me"><span class="ico"></span><span class="lbl">Me</span></button>
 </nav>
 
 <div id="overlay" class="overlay" hidden>

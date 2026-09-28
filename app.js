@@ -285,9 +285,6 @@ function renderToday(el) {
     if (diff > 0 && diff <= 90) bannerHtml = `<div class="banner"><strong>${esc(nxt.label)} in ${diff} min.</strong> ${esc((pickedOption(viewKey, nxt) || {}).name || '')}</div>`;
   }
 
-  // Eating out / ordering in (order.js)
-  const eatOut = eatOutHtml(currentMealKey());
-
   const slotHtml = list.map((s, i) => {
     const st = d.status[s.id];
     const opt = pickedOption(viewKey, s) || { name: '—' };
@@ -376,7 +373,7 @@ function renderToday(el) {
     </div>
   </div>
 
-  <div class="card stack">${eatOut}</div>
+  <div class="card stack"><p class="card-title">Eating out or ordering in?</p><p class="small muted">Check any dish for your dosha and get a note for the restaurant.</p><button class="btn ghost" type="button" data-go-tab="eatout">Open Eat out</button></div>
 
   ${typeBadgeText ? '' : `<p class="small muted" style="text-align:center">Tip: choose your dosha at the top right, or take the quiz, to tune these meals.</p>`}
   `;
@@ -572,6 +569,7 @@ const RENDERERS = {
   today: renderToday,
   foods: (el) => renderFoods(el),
   recipes: (el) => renderRecipes(el),
+  eatout: (el) => renderEatOut(el),
   learn: (el) => renderLearn(el),
   progress: renderProgress,
   me: (el) => renderMe(el),
@@ -586,6 +584,11 @@ function render(tab) {
     if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
   });
+  const mb = $('#meBtn');
+  if (mb) {
+    if (tab === 'me') mb.setAttribute('aria-current', 'page');
+    else mb.removeAttribute('aria-current');
+  }
   if (!sameTab) {
     el.classList.remove('fade-in');
     void el.offsetWidth;
@@ -603,6 +606,8 @@ function render(tab) {
 // ---------- Global event wiring (delegated on #view) ----------
 const view = $('#view');
 view.addEventListener('click', (e) => {
+  const goTab = e.target.closest('[data-go-tab]');
+  if (goTab) { render(goTab.dataset.goTab); return; }
   const btn = e.target.closest('[data-mark]');
   if (btn) { mark(btn.dataset.slot, btn.dataset.mark); return; }
   const day = e.target.closest('[data-day]');
@@ -665,9 +670,6 @@ view.addEventListener('change', (e) => {
     return;
   }
 });
-view.addEventListener('toggle', (e) => {
-  if (e.target.matches && e.target.matches('[data-eatout]')) eatOutState.open = e.target.open;
-}, true);
 view.addEventListener('submit', (e) => {
   if (e.target.closest('[data-dish-form]')) {
     e.preventDefault();
@@ -689,12 +691,14 @@ view.addEventListener('submit', (e) => {
 });
 
 // ---------- Nav ----------
-const iconMap = { today: 'iconToday', foods: 'iconFoods', recipes: 'iconRecipes', learn: 'iconLearn', progress: 'iconProgress', me: 'iconMe' };
+const iconMap = { today: 'iconToday', foods: 'iconFoods', recipes: 'iconRecipes', eatout: 'iconEatOut', learn: 'iconLearn', progress: 'iconProgress', me: 'iconMe' };
 document.querySelectorAll('.tabs button').forEach((b) => {
   const ico = b.querySelector('.ico');
   if (ico && ART[iconMap[b.dataset.tab]]) ico.innerHTML = ART[iconMap[b.dataset.tab]];
   b.addEventListener('click', () => render(b.dataset.tab));
 });
+$('#meBtn .ico').innerHTML = ART.iconMe;
+$('#meBtn').addEventListener('click', () => render('me'));
 $('#typeSelect').addEventListener('change', (e) => {
   const select = e.target;
   settings.type = select.value || null;

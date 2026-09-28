@@ -187,6 +187,13 @@ iconProgress: `
   <path d="M12 16c-2 0-4 1-4 3M12 18c2 0 4 1 4 3" stroke-width="1.5"/>
 </svg>`,
 
+iconEatOut: `
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M3 12h18a1 1 0 0 1 1 1v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6a1 1 0 0 1 1-1z" fill="var(--turmeric)" fill-opacity="0.25"/>
+  <path d="M3 12h18"/>
+  <path d="M8 7v5M12 5v7M16 7v5" stroke-width="1.5"/>
+</svg>`,
+
 iconMe: `
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
   <circle cx="12" cy="9" r="3.5"/>

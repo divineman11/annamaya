@@ -3,12 +3,12 @@
    Uses globals from app.js (settings, esc, typeLetters, swiggyUrl, zomatoUrl, orderCity). */
 
 const OUT_MEALS = [['breakfast', 'Breakfast'], ['lunch', 'Lunch'], ['snack', 'Evening'], ['dinner', 'Dinner']];
-const VERDICT = { 1: 'Good choice', 0: 'Okay in moderation', '-1': 'Better to limit' };
+const VERDICT = { 1: 'Good choice', 0: 'Okay in moderation', '-1': 'Better to limit', '-2': 'Avoid' };
 // Short add-ons per dosha for a dish-specific restaurant note.
 const NOTE_ADDON = { V: 'Serve it hot and fresh.', P: 'No extra chilli.', K: 'Less oil, please.' };
 
 // Survives Today's re-renders (every minute, and on returning from the ordering app).
-const eatOutState = { open: false, meal: null, q: '', loading: null };
+const eatOutState = { meal: null, q: '', loading: null };
 
 const orderLetters = () => (typeLetters().length ? typeLetters() : ['V', 'P', 'K']);
 
@@ -54,13 +54,32 @@ function findDish(query) {
   return best;
 }
 
+// All dishes named in the query, ignoring aliases that sit inside a longer match
+// ("veg biryani" is not also "biryani"). Longest match first.
+function findDishes(query) {
+  const q = ' ' + String(query).toLowerCase().replace(/[^a-z0-9&]+/g, ' ').trim() + ' ';
+  const hits = [];
+  DISHES.forEach((d) => [d.n.toLowerCase(), ...d.a].forEach((al) => {
+    const at = q.indexOf(' ' + al + ' ');
+    if (at >= 0) hits.push({ d, start: at, end: at + al.length + 1 });
+  }));
+  hits.sort((a, b) => (b.end - b.start) - (a.end - a.start));
+  const kept = [];
+  hits.forEach((h) => {
+    if (kept.some((k) => h.start >= k.start && h.end <= k.end)) return;
+    if (!kept.some((k) => k.d === h.d)) kept.push(h);
+  });
+  return kept.map((h) => h.d);
+}
+
 // Ratings for a dish not in DISHES, from keyword hints. null if nothing matched.
 function hintRatings(query) {
   const hits = DISH_HINTS.filter((h) => h.re.test(query));
   if (!hits.length) return null;
   const r = [0, 1, 2].map((i) => {
     const v = hits.map((h) => h.r[i]);
-    return v.includes(-1) ? -1 : v.includes(1) ? 1 : 0;
+    const low = Math.min(...v);
+    return low < 0 ? low : v.includes(1) ? 1 : 0;
   });
   return { r, why: hits.map((h) => h.why), notes: hits.map((h) => h.note).filter(Boolean) };
 }
@@ -71,18 +90,21 @@ function dishAdviceHtml(query, mealKey) {
   const L = orderLetters();
   const idx = { V: 0, P: 1, K: 2 };
   const dish = findDish(raw);
+  // Other dishes/ingredients named alongside the main one (e.g. "ham sandwich" = sandwich + pork).
+  const extras = dish ? findDishes(raw).filter((d) => d !== dish) : [];
+  const allDishes = dish ? [dish, ...extras] : [];
   const hint = dish ? null : hintRatings(raw);
   // Online lookup result (only exists after the user tapped "Look it up online").
   const lk = dish ? null : lookupCache.get(raw.toLowerCase());
   const online = lk && lk.status === 'ok' ? lk.analysis : null;
-  const r = dish ? dish.r : online ? online.r : hint ? hint.r : null;
+  const r = dish ? [0, 1, 2].map((i) => Math.min(...allDishes.map((d) => d.r[i]))) : online ? online.r : hint ? hint.r : null;
   const title = dish ? dish.n : raw;
   const searchQ = dish ? (dish.a.find((a) => (' ' + raw.toLowerCase() + ' ').includes(' ' + a + ' ')) || dish.n) : raw;
   const titleCase = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-  const isNonveg = (dish && dish.t === 'nonveg') || (online && online.nonveg) || /chicken|mutton|fish|prawn|meat|keema/i.test(raw);
-  const isEgg = (dish && dish.t === 'egg') || (online && online.egg && !online.nonveg);
-  const isCurd = (dish && dish.curd) || (online && online.curd) || /curd|raita|lassi|dahi|buttermilk|chaas/i.test(raw);
+  const isNonveg = allDishes.some((d) => d.t === 'nonveg') || (online && online.nonveg) || /chicken|mutton|fish|prawn|meat|keema/i.test(raw);
+  const isEgg = (allDishes.some((d) => d.t === 'egg') && !allDishes.some((d) => d.t === 'nonveg')) || (online && online.egg && !online.nonveg);
+  const isCurd = allDishes.some((d) => d.curd) || (online && online.curd) || /curd|raita|lassi|dahi|buttermilk|chaas/i.test(raw);
   const warn = [];
   if (isNonveg && settings.diet === 'veg') warn.push('This looks like a non-veg dish, and your setting is vegetarian.');
   else if (isNonveg && settings.diet === 'egg') warn.push('This looks like a non-veg dish, and your setting is veg + egg.');
@@ -92,12 +114,12 @@ function dishAdviceHtml(query, mealKey) {
 
   const verdicts = r ? L.map((k) => {
     const v = r[idx[k]];
-    return `<li class="verdict v${v < 0 ? 'bad' : v > 0 ? 'good' : 'ok'}"><strong>${DOSHA_NAMES[k]}:</strong> ${VERDICT[v]}</li>`;
+    return `<li class="verdict v${v <= -2 ? 'avoid' : v < 0 ? 'bad' : v > 0 ? 'good' : 'ok'}"><strong>${DOSHA_NAMES[k]}:</strong> ${VERDICT[v]}</li>`;
   }).join('') : '';
   const worst = r ? Math.min(...L.map((k) => r[idx[k]])) : 0;
 
   // Restaurant note: dish-specific requests first, then short per-dosha add-ons (no repeats).
-  const asks = dish ? [dish.ask] : online ? online.noteBits : hint ? hint.notes : [];
+  const asks = dish ? [...new Set(allDishes.map((d) => d.ask))] : online ? online.noteBits : hint ? hint.notes : [];
   let note;
   if (asks.length) {
     const a = asks.join(' ').toLowerCase();
@@ -108,9 +130,10 @@ function dishAdviceHtml(query, mealKey) {
     note = ORDER_NOTES[settings.type] || ORDER_NOTES.VPK;
   }
 
-  const swap = dish && dish.swap && worst < 0
+  const swapDish = allDishes.filter((d) => d.swap).sort((a, b) => Math.min(...a.r) - Math.min(...b.r))[0];
+  const swap = swapDish && worst < 0
     ? `<div class="swap"><p class="card-title">Better choice for you</p>
-        <div class="order-item"><span>${esc(dish.swap)}</span>${orderLinksHtml(dish.swapQ)}</div></div>`
+        <div class="order-item"><span>${esc(swapDish.swap)}</span>${orderLinksHtml(swapDish.swapQ)}</div></div>`
     : '';
 
   // What we know about an unlisted dish, and the online lookup button / result.
@@ -141,6 +164,7 @@ function dishAdviceHtml(query, mealKey) {
   return `<div class="dish-advice stack" aria-live="polite">
     <div class="order-item"><p class="card-title dish-name">${esc(titleCase(title))}</p>${orderLinksHtml(searchQ)}</div>
     ${r ? `<ul class="verdicts">${verdicts}</ul>` : ''}
+    ${allDishes.some((d) => d.why) ? `<ul class="small">${[...new Set(allDishes.filter((d) => d.why).map((d) => d.why))].map((w) => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}
     ${about}
     ${warn.map((w) => `<p class="banner warn small">${esc(w)}</p>`).join('')}
     <div class="order-note">
@@ -153,14 +177,18 @@ function dishAdviceHtml(query, mealKey) {
   </div>`;
 }
 
+function renderEatOut(el) {
+  el.innerHTML = `<div class="stack"><div class="card stack">${eatOutHtml(currentMealKey())}</div></div>`;
+}
+
 function eatOutHtml(nowMeal) {
   const mealKey = eatOutState.meal || nowMeal;
   const L = typeLetters();
   const tips = [...new Set(orderLetters().flatMap((k) => (L.length ? ORDER_TIPS[k] : ORDER_TIPS[k].slice(0, 1))))];
   const city = orderCity();
   const dishNames = DISHES.filter((d) => settings.diet === 'nonveg' || d.t === 'veg' || (settings.diet === 'egg' && d.t === 'egg')).map((d) => d.n);
-  return `<details class="details" data-eatout${eatOutState.open ? ' open' : ''}>
-    <summary>Eating out or ordering in?</summary>
+  return `<div class="stack" data-eatout>
+    <h2 class="card-title">Eating out or ordering in?</h2>
     <div class="stack">
       <form class="stack" data-dish-form>
         <label class="card-title" for="dishQ">What do you want to order?</label>
@@ -186,5 +214,5 @@ function eatOutHtml(nowMeal) {
       <div><p class="card-title">When you order online</p><ul>${tips.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>
       <p class="small muted">Traditional guidance only. Choose what suits your body today. The Swiggy and Zomato buttons just open a search; Annamaya is not linked to either app.</p>
     </div>
-  </details>`;
+  </div>`;
 }

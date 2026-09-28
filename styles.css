@@ -727,7 +727,17 @@ input[type="checkbox"], input[type="radio"] { width: 1.15rem; height: 1.15rem; a
 .verdict.vgood { border-left-color: var(--neem); }
 .verdict.vok { border-left-color: var(--turmeric); }
 .verdict.vbad { border-left-color: var(--clay); }
+.verdict.vavoid { border-left: 6px solid var(--clay); font-weight: 700; color: var(--clay); }
 .swap { border-top: 1px dashed var(--line); padding-top: var(--space-2); }
 .lookup-result { border-left: 4px solid var(--indigo); background: var(--paper); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); }
 .lookup-result p { margin: 0 0 var(--space-2); }
 .lookup-result p:last-child { margin-bottom: 0; }
+/* ---------- Header actions: dosha select + Me button ---------- */
+.top-actions { display: flex; align-items: center; gap: 0.4rem; flex: none; }
+.me-btn { display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--card); color: var(--muted); cursor: pointer; flex: none; }
+.me-btn .ico, .me-btn svg { width: 24px; height: 24px; display: flex; }
+.me-btn[aria-current="page"] { color: var(--forest); border-color: var(--forest); }
+.me-btn:focus-visible { outline: 3px solid var(--forest); outline-offset: 2px; }
+.top .brand { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+@media (max-width: 400px) { .brand-meaning { display: none; } .type-pick select { width: 7.2rem; max-width: 7.2rem; } }
+@media (max-width: 360px) { .brand-sub { display: none; } .top .brand { gap: 0.35rem; } .top .brand h1 { font-size: 1rem; } .type-pick select { width: 6.6rem; max-width: 6.6rem; padding-left: 0.7rem; padding-right: 1.6rem; } }
