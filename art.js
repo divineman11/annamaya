@@ -165,6 +165,13 @@ iconFoods: `
   <path d="M13 8c0-2 1.5-4 4-5"/>
 </svg>`,
 
+iconRecipes: `
+<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M4 11h16v3a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z" fill="var(--turmeric)" fill-opacity="0.25"/>
+  <path d="M2 11h20"/>
+  <path d="M9 7c-1-1 0-2 0-3M12 7c-1-1 0-2 0-3M15 7c-1-1 0-2 0-3" stroke="var(--neem)" stroke-width="1.5"/>
+</svg>`,
+
 iconLearn: `
 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
   <path d="M5 5c2-1.5 4-1.5 7 0v14c-3-1.5-5-1.5-7 0z" fill="var(--paper)"/>

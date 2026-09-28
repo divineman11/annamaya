@@ -675,13 +675,14 @@ input[type="checkbox"], input[type="radio"] { width: 1.15rem; height: 1.15rem; a
 .order-list { padding-left: 0; list-style: none; }
 .order-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) 0; border-bottom: 1px dashed var(--line); }
 .order-item:last-child { border-bottom: 0; }
-.order-item > span:first-child { flex: 1 1 10rem; }
+.order-item > :first-child { flex: 1 1 10rem; }
 .order-links { display: flex; gap: var(--space-2); }
 .order-btn {
   display: inline-flex; align-items: center; justify-content: center;
   min-height: 48px; min-width: 48px; padding: 0.3rem 0.9rem;
   border-radius: 999px; border: 1px solid var(--forest);
   color: var(--forest); font-weight: 700; font-size: 0.9rem; text-decoration: none;
+  white-space: nowrap;
 }
 .order-btn:hover, .order-btn:focus-visible { background: var(--forest); color: var(--on-accent); }
 .order-note { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
@@ -703,3 +704,27 @@ input[type="checkbox"], input[type="radio"] { width: 1.15rem; height: 1.15rem; a
 .cook-check { display: flex; gap: var(--space-3); align-items: flex-start; min-height: 48px; padding: var(--space-2) 0; border-bottom: 1px dashed var(--line); cursor: pointer; }
 .cook-check input { width: 24px; height: 24px; flex: none; margin-top: 2px; accent-color: var(--forest); }
 .cook-check input:checked + span { text-decoration: line-through; color: var(--muted); }
+
+/* ---------- Recipes tab ---------- */
+.recipe-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.recipe-row {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%;
+  min-height: 48px; padding: var(--space-3); text-align: left; cursor: pointer;
+  border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--card); color: var(--ink);
+}
+.recipe-row:hover, .recipe-row:focus-visible { border-color: var(--forest); }
+.recipe-row-name { font-weight: 700; }
+/* Six tabs: tighten labels on small phones */
+/* Six tabs: size each tab to its label (min 48px tap target) and tighten labels on small phones */
+.tabs button { flex: 1 1 auto; min-width: 48px; }
+@media (max-width: 400px) { .tabs button { font-size: 0.72rem; padding-left: 0; padding-right: 0; } }
+
+/* ---------- Dish advice ---------- */
+.dish-advice { border: 1px solid var(--line); border-radius: var(--radius-sm); padding: var(--space-3) var(--space-2); background: var(--card); }
+.dish-name { margin: 0; font-size: 1.15rem; }
+.verdicts { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.verdict { padding: 0.4rem 0.7rem; border-radius: var(--radius-sm); border-left: 4px solid var(--line); background: var(--paper); }
+.verdict.vgood { border-left-color: var(--neem); }
+.verdict.vok { border-left-color: var(--turmeric); }
+.verdict.vbad { border-left-color: var(--clay); }
+.swap { border-top: 1px dashed var(--line); padding-top: var(--space-2); }

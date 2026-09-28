@@ -89,3 +89,64 @@ function openRecipes(list, id) {
     if (n) n.textContent = `${Object.keys(cook[r.id] || {}).length} of ${r.ing.length + r.steps.length} ticked`;
   };
 }
+
+// ---------- Recipes tab ----------
+// Which meal groups each recipe appears in, from the meal plan (SLOTS).
+const RECIPE_GROUPS = [['all', 'All'], ['breakfast', 'Breakfast'], ['lunch', 'Lunch'], ['dinner', 'Dinner'], ['snack', 'Snacks & drinks']];
+function recipeGroups(r) {
+  const g = new Set();
+  SLOTS.forEach((s) => {
+    if (!s.options.some((o) => r.match.test(o.name))) return;
+    g.add(['breakfast', 'lunch', 'dinner'].includes(s.id) ? s.id : 'snack');
+  });
+  return g;
+}
+const recipeView = { q: '', group: 'all' };
+
+function renderRecipes(el) {
+  const L = typeLetters();
+  el.innerHTML = `
+<div class="stack">
+  <div class="card stack">
+    <h2 class="card-title">Recipes by dosha</h2>
+    <p class="small muted">Home recipes with spices adjusted for ${L.length ? 'your dosha (' + L.map((k) => DOSHA_NAMES[k]).join('–') + ')' : 'each dosha'}. Tick off ingredients and steps as you cook.</p>
+    ${L.length ? '' : '<button class="btn ghost" type="button" data-recipes-quiz>Find your dosha (quiz)</button>'}
+    <input class="search" type="search" placeholder="Search recipes — try 'dal' or 'chicken'" aria-label="Search recipes" value="${esc(recipeView.q)}" data-recipes-q autocomplete="off">
+    <div class="chips" role="group" aria-label="Meal">${RECIPE_GROUPS.map(([k, l]) => `<button type="button" class="chip${k === recipeView.group ? ' on' : ''}" data-recipes-group="${k}" aria-pressed="${k === recipeView.group}">${l}</button>`).join('')}</div>
+    <p class="small muted" data-recipes-count></p>
+    <div class="recipe-list" data-recipes-list></div>
+  </div>
+</div>`;
+
+  const draw = () => {
+    const q = recipeView.q.toLowerCase();
+    const list = RECIPES.filter(recipeAllowed).filter((r) =>
+      (recipeView.group === 'all' || recipeGroups(r).has(recipeView.group)) &&
+      (!q || r.name.toLowerCase().includes(q) || r.ing.some((i) => i.toLowerCase().includes(q))));
+    el.querySelector('[data-recipes-count]').textContent = `${list.length} recipe${list.length === 1 ? '' : 's'}`;
+    el.querySelector('[data-recipes-list]').innerHTML = list.map((r) => {
+      const tip = L.length === 1 ? r.adjust[L[0]] : '';
+      const done = Object.keys(loadCook()[r.id] || {}).length;
+      return `<button type="button" class="recipe-row" data-open-recipe="${r.id}">
+        <span class="recipe-row-name">${esc(r.name)}</span>
+        <span class="small muted">${esc(r.time)}${done ? ` · ${done} ticked` : ''}</span>
+        ${tip ? `<span class="small">${esc(tip)}</span>` : ''}
+      </button>`;
+    }).join('') || '<p class="muted">No recipes match. Try another word.</p>';
+  };
+  draw();
+
+  el.querySelector('[data-recipes-q]').addEventListener('input', (e) => { recipeView.q = e.target.value; draw(); });
+  // Listen on the tab's own root (recreated each render) so listeners never stack on #view.
+  el.firstElementChild.addEventListener('click', (e) => {
+    const g = e.target.closest('[data-recipes-group]');
+    if (g) {
+      recipeView.group = g.dataset.recipesGroup;
+      el.querySelectorAll('[data-recipes-group]').forEach((b) => { const on = b === g; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+      draw(); return;
+    }
+    const o = e.target.closest('[data-open-recipe]');
+    if (o) { openRecipes([RECIPES.find((r) => r.id === o.dataset.openRecipe)]); return; }
+    if (e.target.closest('[data-recipes-quiz]')) startQuiz(() => render('recipes'));
+  });
+}

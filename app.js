@@ -285,54 +285,8 @@ function renderToday(el) {
     if (diff > 0 && diff <= 90) bannerHtml = `<div class="banner"><strong>${esc(nxt.label)} in ${diff} min.</strong> ${esc((pickedOption(viewKey, nxt) || {}).name || '')}</div>`;
   }
 
-  // Eating out (Amendment 2)
-  const mealKey = currentMealKey();
-  const meal = SLOTS.find((s) => s.id === mealKey) || SLOTS[0];
-  const outLists = (() => {
-    const L = typeLetters();
-    const keys = L.length ? L : ['V', 'P', 'K']; // union of all when unset
-    const merge = (which) => {
-      const seen = new Set(), out = [];
-      keys.forEach((k) => (EAT_OUT[k] && EAT_OUT[k][mealKey] ? EAT_OUT[k][mealKey][which] : []).forEach((x) => {
-        if (!seen.has(x)) { seen.add(x); out.push(x); }
-      }));
-      return out;
-    };
-    return { safe: merge('safe'), avoid: merge('avoid') };
-  })();
-  const hideRe = settings.diet === 'veg' ? /chicken|egg|fish|prawn|mutton|meat|keema|crab|kebab|biryani/i
-    : settings.diet === 'egg' ? /chicken|fish|prawn|mutton|meat|keema|crab|kebab|biryani/i : null;
-  if (hideRe) { outLists.safe = outLists.safe.filter((x) => !hideRe.test(x)); outLists.avoid = outLists.avoid.filter((x) => !hideRe.test(x)); }
-  const orderItem = (x) => {
-    const q = ORDER_SEARCH[x];
-    if (!q) return `<li>${esc(x)}</li>`;
-    return `<li class="order-item"><span>${esc(x)}</span><span class="order-links">
-      <a class="order-btn" href="${esc(swiggyUrl(q))}" target="_blank" rel="noopener" aria-label="Find ${esc(q)} on Swiggy">Swiggy</a>
-      <a class="order-btn" data-zomato="${esc(q)}" href="${esc(zomatoUrl(q))}" target="_blank" rel="noopener" aria-label="Find ${esc(q)} on Zomato">Zomato</a>
-    </span></li>`;
-  };
-  const tipKeys = typeLetters().length ? typeLetters() : ['V', 'P', 'K'];
-  const orderTips = [...new Set(tipKeys.flatMap((k) => typeLetters().length ? ORDER_TIPS[k] : ORDER_TIPS[k].slice(0, 1)))];
-  const city = orderCity();
-  const eatOut = `<details class="details">
-    <summary>Eating out or ordering in? (${esc(meal.label)})</summary>
-    <div class="stack">
-      <div class="order-note">
-        <p class="card-title">Note for the restaurant</p>
-        <p class="small muted">Copy this, then paste it in the "cooking instructions" box on Swiggy or Zomato.</p>
-        <p class="order-note-text" id="orderNote">${esc(ORDER_NOTES[settings.type] || ORDER_NOTES.VPK)}</p>
-        <button class="btn primary" type="button" data-copy-note>Copy note</button>
-      </div>
-      <div><p class="card-title">Order this</p><ul class="order-list">${outLists.safe.map(orderItem).join('') || '<li class="muted">–</li>'}</ul></div>
-      <div class="form-row field">
-        <label for="citySel">Your city (for Zomato)</label>
-        <select id="citySel">${ORDER_CITIES.map(([v, l]) => `<option value="${v}"${v === city ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>
-      </div>
-      <div><p class="card-title">When you order online</p><ul>${orderTips.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>
-      <div><p class="card-title">Skip this</p><ul>${outLists.avoid.map((x) => `<li>${esc(x)}</li>`).join('') || '<li class="muted">–</li>'}</ul></div>
-      <p class="small muted">Traditional guidance only. Choose what suits your body today. The Swiggy and Zomato buttons just open a search; Annamaya is not linked to either app.</p>
-    </div>
-  </details>`;
+  // Eating out / ordering in (order.js)
+  const eatOut = eatOutHtml(currentMealKey());
 
   const slotHtml = list.map((s, i) => {
     const st = d.status[s.id];
@@ -617,6 +571,7 @@ let currentTab = 'today';
 const RENDERERS = {
   today: renderToday,
   foods: (el) => renderFoods(el),
+  recipes: (el) => renderRecipes(el),
   learn: (el) => renderLearn(el),
   progress: renderProgress,
   me: (el) => renderMe(el),
@@ -666,7 +621,16 @@ view.addEventListener('click', (e) => {
     if (o) openRecipes(recipesFor(o.name));
     return;
   }
-  if (e.target.closest('[data-copy-note]')) { copyText($('#orderNote').textContent); return; }
+  const cp = e.target.closest('[data-copy-note]');
+  if (cp) { const t = $('#' + (cp.dataset.copyNote || 'orderNote')); if (t) copyText(t.textContent); return; }
+  const om = e.target.closest('[data-out-meal]');
+  if (om) {
+    eatOutState.meal = om.dataset.outMeal;
+    view.querySelectorAll('[data-out-meal]').forEach((b) => { const on = b === om; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    $('#outList').innerHTML = outListHtml(eatOutState.meal);
+    if (eatOutState.q) $('#dishAdvice').innerHTML = dishAdviceHtml(eatOutState.q, eatOutState.meal);
+    return;
+  }
   const chew = e.target.closest('[data-chew-more]');
   if (chew) {
     openOverlay('<div class="card stack">' + chewingFullHtml() + '<button class="btn primary" data-chew-close>Close</button></div>');
@@ -691,7 +655,18 @@ view.addEventListener('change', (e) => {
     return;
   }
 });
+view.addEventListener('toggle', (e) => {
+  if (e.target.matches && e.target.matches('[data-eatout]')) eatOutState.open = e.target.open;
+}, true);
 view.addEventListener('submit', (e) => {
+  if (e.target.closest('[data-dish-form]')) {
+    e.preventDefault();
+    eatOutState.q = $('#dishQ').value.trim().slice(0, 60);
+    $('#dishAdvice').innerHTML = dishAdviceHtml(eatOutState.q, eatOutState.meal || currentMealKey());
+    const box = $('#dishAdvice');
+    if (box.firstElementChild) box.scrollIntoView({ block: 'nearest' });
+    return;
+  }
   const f = e.target.closest('[data-cheat]');
   if (!f) return;
   e.preventDefault();
@@ -704,7 +679,7 @@ view.addEventListener('submit', (e) => {
 });
 
 // ---------- Nav ----------
-const iconMap = { today: 'iconToday', foods: 'iconFoods', learn: 'iconLearn', progress: 'iconProgress', me: 'iconMe' };
+const iconMap = { today: 'iconToday', foods: 'iconFoods', recipes: 'iconRecipes', learn: 'iconLearn', progress: 'iconProgress', me: 'iconMe' };
 document.querySelectorAll('.tabs button').forEach((b) => {
   const ico = b.querySelector('.ico');
   if (ico && ART[iconMap[b.dataset.tab]]) ico.innerHTML = ART[iconMap[b.dataset.tab]];
