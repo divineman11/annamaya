@@ -1,4 +1,4 @@
-// Vedic Lifestyle Diet — master data: SLOTS, CATEGORY, EAT_OUT, RULES, GOALS, DAILY.
+// Vedic Lifestyle Diet — master data: SLOTS, CATEGORY, EAT_OUT, ORDER_SEARCH, ORDER_TIPS, ORDER_NOTES, ORDER_CITIES, RULES, GOALS, DAILY.
 // Types: veg < egg < nonveg. "light" marks lighter options. "suits" lists doshas (V/P/K) an option is traditionally good for.
 const SLOTS = [
   { id: 'wake', label: 'Wake-up', time: '06:45', main: false, options: [
@@ -154,6 +154,57 @@ const EAT_OUT = {
     dinner: { label: 'Dinner', safe: ['Barley khichdi or millet khichdi', 'Phulka + methi dal', 'Rice + snake gourd poriyal + pepper rasam', 'Steamed idli with pepper', 'Light vegetable soup (warm)'], avoid: ['Any non-veg at night', 'Curd, raita or buttermilk', 'Paneer-heavy dinners', 'Late-night snacking after dinner'] },
   },
 };
+
+// Short search word for each EAT_OUT "safe" dish, used for the Swiggy / Zomato
+// buttons. null = not something you order from an app (no buttons shown).
+const ORDER_SEARCH = {
+  'Idli with ghee and coconut chutney': 'Idli', 'Ven pongal with ghee': 'Ven pongal', 'Rava upma (warm, soft)': 'Upma',
+  'Aloo or plain paratha with ghee': 'Aloo paratha', 'Poha with peanuts': 'Poha',
+  'South Indian veg meals (warm, ask mild)': 'South Indian meals', 'Kerala chicken stew with appam': 'Appam stew',
+  'Mild egg curry with rice': 'Egg curry', 'Dal khichdi or pongal meals': 'Khichdi', 'Fish curry (mild) with rice': 'Fish curry',
+  'Warm badam milk': 'Badam milk', 'Dry fruit laddu': 'Dry fruit laddu', 'Roasted peanuts + jaggery': 'Peanut chikki',
+  'Kheer or payasam (small)': 'Payasam', 'Banana + dates': null,
+  'Dal khichdi with ghee': 'Dal khichdi', 'Idli + ghee + chutney': 'Idli', 'Phulka + mild dal + sabzi': 'Phulka dal',
+  'Ven pongal': 'Ven pongal', 'Rice + ash gourd kootu': 'Kootu',
+  'Pesarattu or plain dosa': 'Pesarattu', 'Rava upma': 'Upma', 'Boiled eggs with toast': 'Boiled eggs',
+  'South Indian veg meals (ask for less spicy)': 'South Indian meals', 'Butter chicken or chicken korma with rice': 'Chicken korma',
+  'Curd rice with pappu': 'Curd rice', 'Fruit bowl': 'Fruit bowl', 'Tender coconut': 'Tender coconut',
+  'Phulka + dal + paneer butter masala (mild)': 'Paneer butter masala', 'Veg thali without curd': 'Veg thali', 'Moong dal + rice': 'Dal rice',
+  'Pesarattu (no ghee overload)': 'Pesarattu', 'Ragi dosa or foxtail upma': 'Ragi dosa', 'Idli with pepper + light chutney': 'Idli',
+  'Moong dal chilla': 'Moong dal chilla', 'Steamed foods over fried': null,
+  'Millet meals (jowar/ragi) with pappu': 'Millet meals', 'South Indian meals with more poriyal, less rice': 'South Indian meals',
+  'Pepper chicken (not deep-fried)': 'Pepper chicken', 'Steamed fish with rice and dal': 'Steamed fish', 'Kootu + poriyal combos': 'Kootu',
+  'Steamed corn with pepper': 'Sweet corn', 'Sundal (boiled legumes)': 'Sundal', 'Roasted chana': 'Roasted chana',
+  'Spiced buttermilk (if morning snack)': 'Buttermilk', 'Cucumber sticks with pepper': null,
+  'Barley khichdi or millet khichdi': 'Millet khichdi', 'Phulka + methi dal': 'Phulka dal',
+  'Rice + snake gourd poriyal + pepper rasam': 'Rasam rice', 'Steamed idli with pepper': 'Idli', 'Light vegetable soup (warm)': 'Vegetable soup',
+};
+
+// What to type in the "note to restaurant" box when ordering online.
+const ORDER_TIPS = {
+  V: ['Ask for it hot and freshly made, with a little extra ghee.', 'Skip the cold drink or ice cream add-on.', 'Order soft, moist dishes over dry, crispy ones.'],
+  P: ['Write "less spicy, no extra chilli" in the note to the restaurant.', 'Skip pickles, mirchi and sour chutneys on the side.', 'Pick coconut- or ghee-based gravies over red, oily ones.'],
+  K: ['Write "less oil, less ghee" in the note to the restaurant.', 'Add a pepper rasam or soup instead of a sweet or dessert.', 'Order a smaller portion, or share one plate.'],
+};
+
+// Ready-to-paste "cooking instructions" for the restaurant, by constitution (TYPES key).
+// Kept short so it fits the instructions box in ordering apps.
+const ORDER_NOTES = {
+  V: 'Please serve it hot and fresh. Mild spice. A little extra ghee is welcome. No raw onion.',
+  P: 'Please make it less spicy, no extra chilli. Less oil. No pickle or raw onion on the side.',
+  K: 'Please use less oil and ghee. Pepper and ginger are fine. No sweet or dessert add-on.',
+  VP: 'Please make it mild, no extra chilli. Serve hot and fresh. A little ghee is fine.',
+  PK: 'Please make it less spicy and less oily. No extra chilli, no pickle.',
+  VK: 'Please serve it hot and fresh, with less oil. Pepper and ginger are fine.',
+  VPK: 'Please make it mild, fresh and not too oily.',
+};
+
+// Zomato search pages need a city. Slugs as used in zomato.com URLs.
+const ORDER_CITIES = [
+  ['hyderabad', 'Hyderabad'], ['bangalore', 'Bengaluru'], ['chennai', 'Chennai'], ['vizag', 'Visakhapatnam'],
+  ['vijayawada', 'Vijayawada'], ['mumbai', 'Mumbai'], ['ncr', 'Delhi NCR'], ['pune', 'Pune'], ['kolkata', 'Kolkata'],
+  ['ahmedabad', 'Ahmedabad'], ['kochi', 'Kochi'], ['coimbatore', 'Coimbatore'],
+];
 
 const RULES = {
   all: [

@@ -1,9 +1,9 @@
 // Offline cache. Bump VERSION whenever you change any app file.
-const VERSION = 'vedic-diet-v11';
+const VERSION = 'vedic-diet-v15';
 const FONTS_CACHE = 'vedic-fonts';
 const FILES = [
   './', './index.html', './styles.css', './data.js', './data-foods.js', './data-learn.js',
-  './data-quiz.js', './data-wisdom.js', './art.js', './views.js', './app.js', './manifest.json',
+  './data-quiz.js', './data-wisdom.js', './data-recipes.js', './recipes.js', './art.js', './views.js', './app.js', './manifest.json',
   './icon-180.png', './icon-512.png', './favicon.svg'
 ];
 

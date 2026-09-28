@@ -107,7 +107,7 @@ h2 { font-size: 1.3rem; }
 h3 { font-size: 1.1rem; }
 p { margin: 0 0 var(--space-3); }
 p:last-child { margin-bottom: 0; }
-a { color: var(--forest); }
+a { color: var(--forest); overflow-wrap: anywhere; }
 ul { padding-left: 1.2rem; margin: 0 0 var(--space-3); }
 
 main#view { outline: none; }
@@ -670,3 +670,36 @@ input[type="checkbox"], input[type="radio"] { width: 1.15rem; height: 1.15rem; a
 
 .chew-card { margin-top: 1rem; text-align: left; border-left: 3px solid var(--turmeric); }
 .chew-card ul { margin: 0.4rem 0 0.6rem 1.1rem; }
+
+/* ---------- Order online (Swiggy / Zomato search links) ---------- */
+.order-list { padding-left: 0; list-style: none; }
+.order-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-2) 0; border-bottom: 1px dashed var(--line); }
+.order-item:last-child { border-bottom: 0; }
+.order-item > span:first-child { flex: 1 1 10rem; }
+.order-links { display: flex; gap: var(--space-2); }
+.order-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 48px; min-width: 48px; padding: 0.3rem 0.9rem;
+  border-radius: 999px; border: 1px solid var(--forest);
+  color: var(--forest); font-weight: 700; font-size: 0.9rem; text-decoration: none;
+}
+.order-btn:hover, .order-btn:focus-visible { background: var(--forest); color: var(--on-accent); }
+.order-note { display: flex; flex-direction: column; gap: var(--space-2); align-items: flex-start; }
+.order-note-text {
+  margin: 0; width: 100%; padding: var(--space-3);
+  border: 1px dashed var(--forest); border-radius: var(--radius-sm);
+  background: var(--paper); font-weight: 600;
+  user-select: all; -webkit-user-select: all;
+}
+
+/* ---------- Recipes ---------- */
+.recipe-btn { align-self: flex-start; }
+.recipe-title { font-size: 1.3rem; margin: 0; }
+.recipe-adjust { background: var(--paper); border: 1px dashed var(--forest); border-radius: var(--radius-sm); padding: var(--space-3); }
+.recipe-adjust ul { margin: 0 0 var(--space-2); padding-left: 1.1rem; }
+.recipe-grid { display: flex; flex-wrap: wrap; gap: var(--space-2); padding-bottom: var(--space-2); }
+.recipe-grid .chip { flex: 0 1 auto; max-width: 100%; white-space: normal; text-align: left; }
+.cook-list { list-style: none; padding: 0; margin: 0; }
+.cook-check { display: flex; gap: var(--space-3); align-items: flex-start; min-height: 48px; padding: var(--space-2) 0; border-bottom: 1px dashed var(--line); cursor: pointer; }
+.cook-check input { width: 24px; height: 24px; flex: none; margin-top: 2px; accent-color: var(--forest); }
+.cook-check input:checked + span { text-decoration: line-through; color: var(--muted); }

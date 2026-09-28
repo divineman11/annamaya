@@ -1,0 +1,1 @@
+The owner has given standing permission to commit and push directly to main without asking. Test every change in a phone-sized browser (no errors, no sideways scroll) before pushing. Bump VERSION in sw.js whenever an app file changes. Follow the rules in SPEC.md.

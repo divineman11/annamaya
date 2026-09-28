@@ -175,6 +175,22 @@ function toast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
+// Copy to clipboard, with a fallback for older phones and non-https pages.
+function copyText(text) {
+  const done = () => toast('Copied. Paste it in "cooking instructions" when you order.');
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
+    ta.remove();
+    if (ok) done(); else toast('Could not copy. Press and hold the note to copy it.');
+  };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback);
+  else fallback();
+}
+
 function applyPrefs() {
   const html = document.documentElement;
   html.dataset.text = settings.textSize || 'normal';
@@ -287,12 +303,34 @@ function renderToday(el) {
   const hideRe = settings.diet === 'veg' ? /chicken|egg|fish|prawn|mutton|meat|keema|crab|kebab|biryani/i
     : settings.diet === 'egg' ? /chicken|fish|prawn|mutton|meat|keema|crab|kebab|biryani/i : null;
   if (hideRe) { outLists.safe = outLists.safe.filter((x) => !hideRe.test(x)); outLists.avoid = outLists.avoid.filter((x) => !hideRe.test(x)); }
+  const orderItem = (x) => {
+    const q = ORDER_SEARCH[x];
+    if (!q) return `<li>${esc(x)}</li>`;
+    return `<li class="order-item"><span>${esc(x)}</span><span class="order-links">
+      <a class="order-btn" href="${esc(swiggyUrl(q))}" target="_blank" rel="noopener" aria-label="Find ${esc(q)} on Swiggy">Swiggy</a>
+      <a class="order-btn" data-zomato="${esc(q)}" href="${esc(zomatoUrl(q))}" target="_blank" rel="noopener" aria-label="Find ${esc(q)} on Zomato">Zomato</a>
+    </span></li>`;
+  };
+  const tipKeys = typeLetters().length ? typeLetters() : ['V', 'P', 'K'];
+  const orderTips = [...new Set(tipKeys.flatMap((k) => typeLetters().length ? ORDER_TIPS[k] : ORDER_TIPS[k].slice(0, 1)))];
+  const city = orderCity();
   const eatOut = `<details class="details">
-    <summary>Eating out? (${esc(meal.label)})</summary>
+    <summary>Eating out or ordering in? (${esc(meal.label)})</summary>
     <div class="stack">
-      <div><p class="card-title">Order this</p><ul>${outLists.safe.map((x) => `<li>${esc(x)}</li>`).join('') || '<li class="muted">–</li>'}</ul></div>
+      <div class="order-note">
+        <p class="card-title">Note for the restaurant</p>
+        <p class="small muted">Copy this, then paste it in the "cooking instructions" box on Swiggy or Zomato.</p>
+        <p class="order-note-text" id="orderNote">${esc(ORDER_NOTES[settings.type] || ORDER_NOTES.VPK)}</p>
+        <button class="btn primary" type="button" data-copy-note>Copy note</button>
+      </div>
+      <div><p class="card-title">Order this</p><ul class="order-list">${outLists.safe.map(orderItem).join('') || '<li class="muted">–</li>'}</ul></div>
+      <div class="form-row field">
+        <label for="citySel">Your city (for Zomato)</label>
+        <select id="citySel">${ORDER_CITIES.map(([v, l]) => `<option value="${v}"${v === city ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>
+      </div>
+      <div><p class="card-title">When you order online</p><ul>${orderTips.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>
       <div><p class="card-title">Skip this</p><ul>${outLists.avoid.map((x) => `<li>${esc(x)}</li>`).join('') || '<li class="muted">–</li>'}</ul></div>
-      <p class="small muted">Traditional guidance only. Choose what suits your body today.</p>
+      <p class="small muted">Traditional guidance only. Choose what suits your body today. The Swiggy and Zomato buttons just open a search; Annamaya is not linked to either app.</p>
     </div>
   </details>`;
 
@@ -326,6 +364,7 @@ function renderToday(el) {
         ? `<select data-pick="${s.id}" aria-label="${esc(s.label)} choice">${opts.map((o) => `<option value="${esc(o.name)}"${o.name === opt.name ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}</select>`
         : `<div>${esc(opt.name)}</div>`}
       ${opt && opt.note ? `<p class="small muted">${opt.note}</p>` : ''}
+      ${recipesFor(opt.name).length ? `<button class="btn ghost recipe-btn" type="button" data-recipe="${s.id}">How to cook${recipesFor(opt.name).length > 1 ? ` (${recipesFor(opt.name).length} recipes)` : ''}</button>` : ''}
       ${notes.length ? `<p class="small muted">${notes.join(' ')}</p>` : ''}
       <div class="slot-actions btn-row">
         <button class="btn${st === 'done' ? ' primary' : ''}" data-mark="done" data-slot="${s.id}">Eaten</button>
@@ -388,6 +427,12 @@ function renderToday(el) {
   ${typeBadgeText ? '' : `<p class="small muted" style="text-align:center">Tip: choose your dosha at the top right, or take the quiz, to tune these meals.</p>`}
   `;
 }
+
+// Search links for ordering apps. These only open a search; nothing is sent from the app.
+const swiggyUrl = (q) => 'https://www.swiggy.com/search?query=' + encodeURIComponent(q);
+const orderCity = () => (ORDER_CITIES.some(([v]) => v === settings.city) ? settings.city : 'hyderabad');
+const zomatoUrl = (q) => 'https://www.zomato.com/' + orderCity() + '/delivery/dish-'
+  + String(q).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 function currentMealKey() {
   const m = new Date().getHours() * 60 + new Date().getMinutes();
@@ -614,6 +659,14 @@ view.addEventListener('click', (e) => {
     render('today');
     return;
   }
+  const rb = e.target.closest('[data-recipe]');
+  if (rb) {
+    const slot = SLOTS.find((x) => x.id === rb.dataset.recipe);
+    const o = slot && pickedOption(viewKey, slot);
+    if (o) openRecipes(recipesFor(o.name));
+    return;
+  }
+  if (e.target.closest('[data-copy-note]')) { copyText($('#orderNote').textContent); return; }
   const chew = e.target.closest('[data-chew-more]');
   if (chew) {
     openOverlay('<div class="card stack">' + chewingFullHtml() + '<button class="btn primary" data-chew-close>Close</button></div>');
@@ -631,6 +684,12 @@ view.addEventListener('change', (e) => {
   }
   if (e.target.id === 'gymToggle') { editDay(viewKey).gym = e.target.checked; save(); render('today'); return; }
   if (e.target.id === 'shiftSel') { editDay(viewKey).shift = Number(e.target.value); save(); render('today'); return; }
+  if (e.target.id === 'citySel') {
+    // Update links in place so the open "Eating out" panel stays open.
+    settings.city = e.target.value; save();
+    view.querySelectorAll('[data-zomato]').forEach((a) => { a.href = zomatoUrl(a.dataset.zomato); });
+    return;
+  }
 });
 view.addEventListener('submit', (e) => {
   const f = e.target.closest('[data-cheat]');

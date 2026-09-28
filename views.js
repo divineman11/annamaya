@@ -572,8 +572,14 @@ return L.reduce((sum, l) => sum + (Number(f[l]) || 0), 0);
 }
 
 function renderFoods(el) {
+const allRecipes = RECIPES.filter(recipeAllowed);
 el.innerHTML = `
 <div class="stack">
+<details class="details card" data-recipes-card>
+<summary>Recipes by dosha (${allRecipes.length})</summary>
+<p class="small muted">Home recipes with spices adjusted for your dosha. Tick off ingredients and steps as you cook.</p>
+<div class="recipe-grid">${allRecipes.map((r) => `<button class="chip" type="button" data-open-recipe="${r.id}">${esc(r.name)}</button>`).join('')}</div>
+</details>
 <div class="card stack">
 <input class="search" type="search" placeholder="Search 160+ foods — try 'ragi' or 'fish'"
 aria-label="Search foods" autocomplete="off">
@@ -585,6 +591,11 @@ aria-label="Search foods" autocomplete="off">
 </div>
 <div data-notype></div>
 </div>`;
+
+el.querySelector('[data-recipes-card]').addEventListener('click', (e) => {
+const b = e.target.closest('[data-open-recipe]');
+if (b) openRecipes([RECIPES.find((r) => r.id === b.dataset.openRecipe)]);
+});
 
 const state = { q: '', cat: 'All' };
 
@@ -1377,6 +1388,7 @@ if ('pd.settings' in data && !isPlainObject(data['pd.settings'])) return false;
 if ('pd.days' in data && !isPlainObject(data['pd.days'])) return false;
 if ('pd.defaults' in data && !isPlainObject(data['pd.defaults'])) return false;
 if ('pd.bought' in data && !isPlainObject(data['pd.bought'])) return false;
+if ('pd.cook' in data && !(isPlainObject(data['pd.cook']) && Object.values(data['pd.cook']).every(isPlainObject))) return false;
 if ('pd.settings' in data) {
 const st = data['pd.settings'];
 if ('gymTime' in st && !isTimeString(st.gymTime)) return false;

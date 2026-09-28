@@ -13,6 +13,8 @@ Open Annamaya here: https://divineman11.github.io/annamaya/
 - **Dosha quiz** — answer a few questions to find your likely constitution across seven types.
 - **Daily meal plan** — meals tailored to your dosha, with veg, egg and non-veg options for each.
 - **Food library** — 165 foods rated for Vata, Pitta and Kapha.
+- **Recipes by dosha** — 30 home recipes with spices adjusted for your dosha, and a tick-off checklist for ingredients and steps.
+- **Ordering in** — dosha-friendly dishes with Swiggy and Zomato search buttons, and a copyable note for the restaurant's cooking instructions.
 - **Foods that don't go together** — Viruddha Ahara (incompatible food combinations) from the Charaka Samhita, Sutrasthana 26.
 - **Verses on food and mind** — Bhagavad Gita 17.7–10, 6.16–17 and 3.14; Chandogya Upanishad 6.5.4 and 7.26.2; Taittiriya Upanishad 3.2.
 - **Gut and mind** — how agni (digestive fire) shapes health and mood.
