@@ -108,7 +108,9 @@ function dishAdviceHtml(query, mealKey) {
   let extraHint = null;
   if (dish && r) {
     let rest = ' ' + raw.toLowerCase().replace(/[^a-z0-9&]+/g, ' ').trim() + ' ';
-    allDishes.forEach((d) => [d.n.toLowerCase(), ...d.a].forEach((al) => { rest = rest.split(' ' + al + ' ').join(' '); }));
+    // Longest names first, so "sweet corn soup" is removed whole before "soup".
+    allDishes.flatMap((d) => [d.n.toLowerCase(), ...d.a]).sort((a, b) => b.length - a.length)
+      .forEach((al) => { rest = rest.split(' ' + al + ' ').join(' '); });
     extraHint = rest.trim() ? hintRatings(rest) : null;
     if (extraHint) [0, 1, 2].forEach((i) => { r[i] = Math.min(r[i], extraHint.r[i]); });
   }
