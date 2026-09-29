@@ -45,10 +45,13 @@ function recipeHtml(r, list) {
   const tabs = list.length > 1
     ? `<div class="chips" role="group" aria-label="Recipes in this meal">${list.map((x) => `<button class="chip${x.id === r.id ? ' on' : ''}" data-recipe-go="${x.id}" aria-pressed="${x.id === r.id}">${esc(x.name)}</button>`).join('')}</div>`
     : '';
+  speechTexts.recipe = `${r.name}. Serves 2, ${r.time}. ` + letters.map((k) => `For ${DOSHA_NAMES[k]}: ${r.adjust[k]}`).join(' ') +
+    ' Ingredients: ' + r.ing.join('. ') + '. Steps: ' + r.steps.map((s, i) => `Step ${i + 1}. ${s}`).join(' ');
   return `<div class="card stack" data-recipe-panel="${r.id}">
     ${tabs}
     <h2 class="card-title recipe-title">${esc(r.name)}</h2>
     <p class="small muted">Serves 2 · ${esc(r.time)}</p>
+    ${speakBtnHtml('recipe')}
     <div class="recipe-adjust">
       <p class="card-title">${L.length ? 'Spices for your dosha (' + letters.map((k) => DOSHA_NAMES[k]).join('–') + ')' : 'Spices by dosha'}</p>
       <ul>${adjust}</ul>

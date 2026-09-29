@@ -160,6 +160,7 @@ function openOverlay(html, opts) {
   ov.onclick = (e) => { if (e.target === ov && !ov.dataset.locked) closeOverlay(); };
 }
 function closeOverlay() {
+  if (typeof stopSpeaking === 'function') stopSpeaking();
   const ov = $('#overlay');
   ov.hidden = true;
   delete ov.dataset.locked;
@@ -285,6 +286,10 @@ function renderToday(el) {
     if (diff > 0 && diff <= 90) bannerHtml = `<div class="banner"><strong>${esc(nxt.label)} in ${diff} min.</strong> ${esc((pickedOption(viewKey, nxt) || {}).name || '')}</div>`;
   }
 
+  // Read aloud: greeting and today's meals.
+  speechTexts.today = [g.hi + '. ' + g.line, 'Your meals:']
+    .concat(list.map((s) => `${s.label} at ${fmt(s.min)}: ${(pickedOption(viewKey, s) || {}).name || ''}.`)).join(' ');
+
   const slotHtml = list.map((s, i) => {
     const st = d.status[s.id];
     const opt = pickedOption(viewKey, s) || { name: '—' };
@@ -347,6 +352,7 @@ function renderToday(el) {
     </div>
     <p class="small muted">${doneMains} of ${mains.length} main meals eaten today · streak ${streak()} day${streak() === 1 ? '' : 's'}</p>
     ${prevNext}
+    <div class="btn-row">${speakBtnHtml('today')}</div>
   </div>
 
   <div class="card daily">
@@ -354,6 +360,8 @@ function renderToday(el) {
       ? `<p class="card-title">Wisdom for today</p><p>${esc(wisdom.text)} <span class="small muted">— ${esc(wisdom.ref)}</span></p>`
       : `<p class="card-title">One small thing today</p><p>${esc(card.text)}</p>`}
   </div>
+
+  ${seasonCardHtml()}
 
   ${bannerHtml}
 
@@ -578,6 +586,7 @@ function render(tab) {
   const sameTab = (tab === currentTab);
   const y = window.scrollY;
   currentTab = tab;
+  if (!sameTab && typeof stopSpeaking === 'function') stopSpeaking();
   const el = $('#view');
   // Drop the previous tab's click handler (see setTabClick in views.js) before drawing the next tab.
   if (el._tabClick) { el.removeEventListener('click', el._tabClick); el._tabClick = null; }

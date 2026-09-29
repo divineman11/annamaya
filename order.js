@@ -181,8 +181,12 @@ function dishAdviceHtml(query, mealKey) {
     if (reasons.length) about += `<ul class="small">${reasons.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>`;
   }
 
+  speechTexts.advice = [titleCase(title) + '.']
+    .concat(rr ? L.map((k) => `${DOSHA_NAMES[k]}: ${VERDICT[rr[idx[k]]]}.`) : [])
+    .concat(warn)
+    .concat(['How to order it: ' + note]).join(' ');
   return `<div class="dish-advice stack">
-    <div class="order-item"><p class="card-title dish-name">${esc(titleCase(title))}</p>${orderLinksHtml(searchQ)}</div>
+    <div class="order-item"><p class="card-title dish-name">${esc(titleCase(title))}</p>${orderLinksHtml(searchQ)}${speakBtnHtml('advice')}</div>
     ${rr ? `<ul class="verdicts">${verdicts}</ul>` : ''}
     ${combo ? `<p class="banner warn small"><strong>Foods that don't go together:</strong> ${esc(combo.pair)}. ${esc(combo.concern)} <span class="muted">(${esc(combo.source)})</span></p>` : ''}
     ${allDishes.some((d) => d.why) ? `<ul class="small">${[...new Set(allDishes.filter((d) => d.why).map((d) => d.why))].map((w) => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}

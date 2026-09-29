@@ -745,3 +745,8 @@ input[type="checkbox"], input[type="radio"] { width: 1.15rem; height: 1.15rem; a
 .top .brand { flex: 1 1 auto; min-width: 0; overflow: hidden; }
 @media (max-width: 400px) { .brand-meaning { display: none; } .type-pick select { width: 7.2rem; max-width: 7.2rem; } }
 @media (max-width: 360px) { .brand-sub { display: none; } .top .brand { gap: 0.35rem; } .top .brand h1 { font-size: 1rem; } .type-pick select { width: 6.6rem; max-width: 6.6rem; padding-left: 0.7rem; padding-right: 1.6rem; } }
+
+/* ---------- Seasons (Ritucharya) & Read aloud ---------- */
+.season-card { border-left: 5px solid var(--turmeric); }
+.season-tip { margin: 0; }
+.speak-btn[aria-pressed="true"] { background: var(--forest); border-color: var(--forest); color: var(--on-accent); }

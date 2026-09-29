@@ -808,6 +808,9 @@ html += '<div class="card stack stagger">' + doshaIntroHtml() + '</div>';
 // Know your doshas
 html += '<div class="card stack stagger">' + doshaGuideHtml() + '</div>';
 
+// Season
+html += '<div class="card stack stagger">' + seasonFullHtml(seasonFor()) + '<div class="btn-row">' + speakBtnHtml('seasonfull') + '</div></div>';
+
 // Your type
 html += '<div class="card stack stagger">';
 html += '<h2 class="card-title">Your type</h2>';
