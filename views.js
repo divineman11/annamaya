@@ -1118,7 +1118,13 @@ html += '<div class="card stack" id="backupCard"><h2 class="card-title">Backup</
 '<div data-confirm hidden class="stack"><p class="small">This will overwrite the data on this device. Continue?</p>' +
 '<div class="btn-row"><button class="btn danger" data-overwrite>Yes, restore</button><button class="btn ghost" data-cancelrestore>Cancel</button></div></div>' +
 '<p class="small muted" data-iosnote2 hidden>To download, open this page in Safari.</p>' +
-'<p class="small" data-backuperror hidden></p></div>';
+'<p class="small" data-backuperror hidden></p>' +
+'<p class="small muted">Moving to annamaya.online? Use Save my data (or Copy) here, then Restore (or paste) on the new site.</p>' +
+'<div class="btn-row"><button class="btn ghost" type="button" data-mvcopy>Copy</button></div>' +
+'<textarea class="search" id="mvPaste" rows="3" placeholder="Or paste exported data here"></textarea>' +
+'<div class="btn-row"><button class="btn ghost" type="button" data-mvpaste>Import pasted data</button></div>' +
+'<div data-mvconfirm hidden class="stack"><p class="small">This will overwrite matching data on this device. Continue?</p>' +
+'<div class="btn-row"><button class="btn danger" data-mvyes>Yes, import</button><button class="btn ghost" data-mvno>Cancel</button></div></div></div>';
 
 // Disclaimer
 html += '<details class="details card"><summary>Disclaimer</summary><p class="small">' + esc(DISCLAIMER) + '</p></details>';
@@ -1162,6 +1168,38 @@ if (e.target.closest('[data-grocery]')) { openGrocery(); return; }
 if (e.target.closest('[data-export]')) {
 if (navigator.standalone) { const n = root.querySelector('[data-iosnote2]'); if (n) n.hidden = false; }
 exportBackup(); toast('Backup saved.');
+return;
+}
+if (e.target.closest('[data-mvcopy]')) {
+const txt = moveExportText();
+if (txt === null) { toast('Could not read your data.'); return; }
+const ok = () => toast('Data copied.');
+const bad = () => { if (execCopy(txt)) ok(); else toast('Could not copy. Use Save my data instead.'); };
+if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(ok, bad); else bad();
+return;
+}
+if (e.target.closest('[data-mvpaste]')) {
+const ta = document.getElementById('mvPaste');
+moveStage(ta ? ta.value : '');
+return;
+}
+if (e.target.closest('[data-mvno]')) {
+const c = root.querySelector('[data-mvconfirm]');
+if (c) c.hidden = true;
+const cd = document.getElementById('backupCard');
+if (cd) cd._mvPending = null;
+return;
+}
+if (e.target.closest('[data-mvyes]')) {
+const card = document.getElementById('backupCard');
+const pending = card && card._mvPending;
+if (pending) {
+try {
+Object.keys(localStorage).filter((k) => k.indexOf('pd.') === 0).forEach((k) => localStorage.removeItem(k));
+Object.keys(pending).forEach((k) => localStorage.setItem(k, pending[k]));
+location.reload();
+} catch (err) { toast('Could not import that data.'); }
+}
 return;
 }
 if (e.target.closest('[data-restore]')) {
@@ -1372,6 +1410,9 @@ if (card) {
 card._pendingBackup = null;
 const host = card._confirmHost || card.querySelector('[data-confirm]');
 if (host) host.hidden = true;
+const mvh = card.querySelector('[data-mvconfirm]');
+if (mvh) mvh.hidden = true;
+card._mvPending = null;
 const err = card.querySelector('[data-backuperror]');
 if (err) { err.textContent = msg; err.hidden = false; }
 }
@@ -1426,6 +1467,58 @@ typeof w.kg === 'number' && Number.isFinite(w.kg)
 return true;
 }
 
+function moveFileName() {
+const d = new Date();
+return 'annamaya-data-' + d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + '.json';
+}
+
+function moveExportText() {
+try {
+const data = {};
+for (let i = 0; i < localStorage.length; i++) {
+const k = localStorage.key(i);
+if (k && k.indexOf('pd.') === 0) data[k] = localStorage.getItem(k);
+}
+return JSON.stringify({ app: 'annamaya', v: 1, exported: new Date().toISOString(), data: data }, null, 2);
+} catch (err) { return null; }
+}
+
+function moveParse(text) {
+let obj;
+try { obj = JSON.parse(String(text)); } catch { return null; }
+if (!obj || typeof obj.data !== 'object' || !obj.data || Array.isArray(obj.data)) return null;
+if (obj.app === 'vedic-lifestyle-diet') {
+if (!_validBackupData(obj.data)) return null;
+const out = {};
+Object.keys(obj.data).forEach((k) => { out[k] = JSON.stringify(obj.data[k]); });
+return out;
+}
+if (obj.app !== 'annamaya') return null;
+const keys = Object.keys(obj.data);
+if (keys.length === 0) return null;
+if (!keys.every((k) => k.indexOf('pd.') === 0 && typeof obj.data[k] === 'string')) return null;
+const parsed = {};
+try { keys.forEach((k) => { parsed[k] = JSON.parse(obj.data[k]); }); } catch { return null; }
+if (!_validBackupData(parsed)) return null;
+return obj.data;
+}
+
+function moveStage(text) {
+const data = moveParse(text);
+if (!data) { toast('That does not look like Annamaya data.'); return; }
+const card = document.getElementById('backupCard');
+const host = card && card.querySelector('[data-mvconfirm]');
+if (!host) { toast('Open the Me tab to import.'); return; }
+const old = card.querySelector('[data-confirm]');
+if (old) old.hidden = true;
+card._pendingBackup = null;
+const err = card.querySelector('[data-backuperror]');
+if (err) err.hidden = true;
+card._mvPending = data;
+host.hidden = false;
+toast('Data loaded. Confirm to import.');
+}
+
 function importBackup(file) {
 const reader = new FileReader();
 reader.onload = () => {
@@ -1445,6 +1538,9 @@ if (!host) { toast('Open the Me tab to restore.'); return; }
 const err = card && card.querySelector('[data-backuperror]');
 if (err) err.hidden = true;
 card._pendingBackup = obj.data;
+const mvh = card.querySelector('[data-mvconfirm]');
+if (mvh) mvh.hidden = true;
+card._mvPending = null;
 host.hidden = false;
 toast('Backup loaded. Confirm to restore.');
 };

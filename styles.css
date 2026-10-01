@@ -214,7 +214,7 @@ label.row { min-height: 48px; cursor: pointer; }
 }
 
 /* ---------- Buttons, inputs ---------- */
-button, select, input { font: inherit; color: inherit; }
+button, select, input, textarea { font: inherit; color: inherit; }
 .btn {
   display: inline-flex; align-items: center; justify-content: center;
   gap: 0.4rem;

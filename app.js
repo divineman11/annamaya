@@ -176,17 +176,22 @@ function toast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
+// Hidden-textarea copy for older phones and non-https pages. Returns true on success.
+function execCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
+  ta.remove();
+  return ok;
+}
+
 // Copy to clipboard, with a fallback for older phones and non-https pages.
 function copyText(text) {
   const done = () => toast('Copied. Paste it in "cooking instructions" when you order.');
   const fallback = () => {
-    const ta = document.createElement('textarea');
-    ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    let ok = false;
-    try { ok = document.execCommand('copy'); } catch (err) { ok = false; }
-    ta.remove();
-    if (ok) done(); else toast('Could not copy. Press and hold the note to copy it.');
+    if (execCopy(text)) done(); else toast('Could not copy. Press and hold the note to copy it.');
   };
   if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback);
   else fallback();
